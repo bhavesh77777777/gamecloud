@@ -32,11 +32,16 @@ function render(list = games) {
 function launch(id) {
   const game = games.find(g => g.id === id);
 
+  if (game.name === "Pokémon UNITE") {
+    openPokemonUnite();
+    return;
+  }
+
   if (!game.playable) {
     content.innerHTML = `
       <h2>${game.icon} ${game.name}</h2>
       <div class="notice">
-        This game is coming soon. The 2048 game is currently playable.
+        This game is coming soon.
       </div>
     `;
     modal.classList.remove("hidden");
@@ -46,6 +51,64 @@ function launch(id) {
   start2048();
 }
 
+function openPokemonUnite() {
+  content.innerHTML = `
+    <div class="game-window">
+      <div class="game-header">
+        <div>
+          <p class="eyebrow">CLOUD PLAY</p>
+          <h2>⚡ Pokémon UNITE</h2>
+        </div>
+        <button class="secondary"
+          onclick="modal.classList.add('hidden')">
+          Close
+        </button>
+      </div>
+
+      <div class="player unite-player">
+        <div>
+          <div style="font-size:64px">⚡</div>
+          <h2>Pokémon UNITE</h2>
+          <p>Cloud gaming session</p>
+
+          <button class="primary" onclick="startUniteSession()">
+            ▶ PLAY
+          </button>
+        </div>
+      </div>
+
+      <div class="notice">
+        <b>Streaming ready:</b>
+        This player is prepared for a legitimate game-streaming
+        backend. The actual Pokémon UNITE game must run on an
+        authorized remote gaming system.
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove("hidden");
+}
+
+function startUniteSession() {
+  content.innerHTML = `
+    <div class="game-window">
+      <div class="player unite-player">
+        <div>
+          <div style="font-size:64px">🎮</div>
+          <h2>Waiting for game server</h2>
+          <p>
+            Your GameCloud frontend is ready.
+            A legitimate streaming server still needs to be connected.
+          </p>
+
+          <div class="notice">
+            Status: <b style="color:#49df8a">READY</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 function start2048() {
   content.innerHTML = `
     <div class="game-window">
