@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GameCloud — Free Browser Gaming</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">GAME<span>CLOUD</span></div>
+    <nav><a href="#home">Home</a><a href="#games">Games</a><a href="#about">About</a></nav>
+    <button class="ghost" id="loginBtn">Sign in</button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div>
+        <p class="eyebrow">PLAY IN YOUR BROWSER</p>
+        <h1>Your games.<br><span>Instantly.</span></h1>
+        <p class="sub">A clean cloud-gaming style front end for browser-playable games. No installation required.</p>
+        <div class="actions"><a class="primary" href="#games">Browse games</a><button class="secondary" id="randomBtn">Random game</button></div>
+      </div>
+      <div class="hero-card">
+        <div class="screen"><div class="screen-grid"></div><div class="play">▶</div></div>
+        <div class="status"><span class="dot"></span> Browser ready <b>LOW LATENCY</b></div>
+      </div>
+    </section>
+
+    <section id="games" class="section">
+      <div class="section-head"><div><p class="eyebrow">LIBRARY</p><h2>Choose a game</h2></div><input id="search" placeholder="Search games..."></div>
+      <div id="gamesGrid" class="games"></div>
+    </section>
+
+    <section id="about" class="about">
+      <div><p class="eyebrow">HOW IT WORKS</p><h2>Built for the browser</h2></div>
+      <div class="steps"><div><b>01</b><h3>Pick a game</h3><p>Choose a title from your library.</p></div><div><b>02</b><h3>Launch</h3><p>The player opens directly in the site.</p></div><div><b>03</b><h3>Play</h3><p>Use keyboard, mouse, or supported controllers.</p></div></div>
+    </section>
+  </main>
+
+  <footer>GAMECLOUD <span>•</span> Demo starter package</footer>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-box"><button class="close" id="close">×</button><div id="modalContent"></div></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
