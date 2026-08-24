@@ -9,6 +9,52 @@ const games = [
   { id: 8, name: "Galaxy Defender", genre: "Arcade", icon: "🌌", playable: false },
   { id: 9, name: "Pokémon UNITE", genre: "MOBA", icon: "⚡", playable: false }
 ];
+// GameCloud WebRTC signaling server
+const SIGNALING_SERVER =
+  "wss://gamecloud-webrtc.onrender.com";function connectToSignalingServer(room = "gamecloud-test") {
+  const socket = new WebSocket(SIGNALING_SERVER);
+
+  socket.onopen = () => {
+    console.log("GameCloud WebRTC signaling connected");
+
+    socket.send(JSON.stringify({
+      type: "join",
+      room: room
+    }));
+  };
+
+  socket.onmessage = event => {
+    try {
+      const message = JSON.parse(event.data);
+
+      console.log(
+        "GameCloud signaling message:",
+        message
+      );
+
+    } catch (error) {
+      console.error(
+        "Invalid signaling message:",
+        error
+      );
+    }
+  };
+
+  socket.onerror = error => {
+    console.error(
+      "GameCloud WebRTC signaling error:",
+      error
+    );
+  };
+
+  socket.onclose = () => {
+    console.log(
+      "GameCloud WebRTC signaling disconnected"
+    );
+  };
+
+  return socket;
+}
 
 const grid = document.querySelector("#gamesGrid");
 const search = document.querySelector("#search");
@@ -987,4 +1033,5 @@ if (loginButton) {
    START
 ========================= */
 
-render();
+render();const signalingSocket =
+  connectToSignalingServer();
