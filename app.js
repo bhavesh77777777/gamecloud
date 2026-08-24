@@ -152,67 +152,199 @@ if (modal) {
 /* =========================
    POKÉMON UNITE
 ========================= */
-
 function showPokemonUnite() {
   showModal(`
     <div class="game-window">
-
       <div class="game-header">
-
         <div>
-          <p class="eyebrow">CLOUD PLAY</p>
+          <p class="eyebrow">WEBRTC CLOUD PLAY</p>
           <h2>⚡ Pokémon UNITE</h2>
         </div>
-
-        <button class="secondary" id="uniteClose">
-          Close
-        </button>
-
+        <button class="secondary" id="uniteClose">Close</button>
       </div>
 
-
-      <div class="player unite-player">
-
+      <div class="player unite-player" id="unitePlayer">
         <div>
-
-          <div style="font-size:64px">
-            ⚡
-          </div>
-
-          <h2>
-            Pokémon UNITE
-          </h2>
-
-          <p>
-            Cloud gaming player
-          </p>
-
-          <button class="primary" id="unitePlay">
-            ▶ PLAY
+          <div style="font-size:64px">🎮</div>
+          <h2>GameCloud Streaming</h2>
+          <p>WebRTC test player</p>
+          <button class="primary" id="startWebRTC">
+            ▶ START STREAM TEST
           </button>
-
         </div>
-
       </div>
-
 
       <div class="notice">
-
-        <b>GameCloud player ready.</b>
-
-        <br><br>
-
-        The actual commercial game must come
-        from an authorized game/streaming source.
-        GameCloud does not copy or host the
-        game's files.
-
+        This is a WebRTC connectivity test.
+        It does not contain or copy Pokémon UNITE.
       </div>
-
     </div>
   `);
 
+  document.querySelector("#uniteClose")?.addEventListener(
+    "click",
+    closeModal
+  );
 
+  document.querySelector("#startWebRTC")?.addEventListener(
+    "click",
+    startWebRTCTest
+  );
+}
+let testSocket = null;
+let testPeer = null;
+
+async function startWebRTCTest() {
+  const player = document.querySelector("#unitePlayer");
+
+  if (!player) return;
+
+  player.innerHTML = `
+    <div>
+      <div style="font-size:55px">📡</div>
+      <h2>Connecting...</h2>
+      <p id="webrtcStatus">
+        Connecting to GameCloud signaling server
+      </p>
+    </div>
+  `;
+
+  testSocket = new WebSocket(
+    "wss://gamecloud-webrtc.onrender.com"
+  );
+
+  testSocket.onopen = () => {
+    updateWebRTCStatus(
+      "Connected to signaling server"
+    );
+
+    testSocket.send(JSON.stringify({
+      type: "join",
+      room: "gamecloud-test"
+    }));
+
+    createWebRTCPeer();
+  };
+
+  testSocket.onmessage = async event => {
+    const message = JSON.parse(event.data);
+
+    if (!testPeer) return;
+
+    if (message.type === "offer") {
+      await testPeer.setRemoteDescription(
+        message.offer
+      );
+
+      const answer =
+        await testPeer.createAnswer();
+
+      await testPeer.setLocalDescription(answer);
+
+      testSocket.send(JSON.stringify({
+        type: "answer",
+        answer: answer
+      }));
+    }
+
+    if (message.type === "answer") {
+      await testPeer.setRemoteDescription(
+        message.answer
+      );
+    }
+
+    if (message.type === "candidate") {
+      try {
+        await testPeer.addIceCandidate(
+          message.candidate
+        );
+      } catch (error) {
+        console.log(
+          "ICE candidate error",
+          error
+        );
+      }
+    }
+  };
+
+  testSocket.onerror = () => {
+    updateWebRTCStatus(
+      "Could not connect to signaling server"
+    );
+  };
+
+  testSocket.onclose = () => {
+    console.log(
+      "WebRTC signaling connection closed"
+    );
+  };
+}
+
+function createWebRTCPeer() {
+  testPeer = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302"
+      }
+    ]
+  });
+
+  testPeer.onicecandidate = event => {
+    if (
+      event.candidate &&
+      testSocket &&
+      testSocket.readyState === WebSocket.OPEN
+    ) {
+      testSocket.send(JSON.stringify({
+        type: "candidate",
+        candidate: event.candidate
+      }));
+    }
+  };
+
+  testPeer.onconnectionstatechange = () => {
+    updateWebRTCStatus(
+      "Connection: " +
+      testPeer.connectionState
+    );
+  };
+
+  testPeer.ontrack = event => {
+    const player =
+      document.querySelector("#unitePlayer");
+
+    if (!player) return;
+
+    player.innerHTML = "";
+
+    const video =
+      document.createElement("video");
+
+    video.autoplay = true;
+    video.playsInline = true;
+    video.controls = true;
+
+    if (event.streams[0]) {
+      video.srcObject =
+        event.streams[0];
+    }
+
+    video.style.width = "100%";
+    video.style.height = "100%";
+    video.style.objectFit = "contain";
+
+    player.appendChild(video);
+  };
+}
+
+function updateWebRTCStatus(message) {
+  const status =
+    document.querySelector("#webrtcStatus");
+
+  if (status) {
+    status.textContent = message;
+  }
+}
   const closeButton =
     document.querySelector("#uniteClose");
 
