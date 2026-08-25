@@ -1,1169 +1,1310 @@
+/* =========================================================
+   GAMECLOUD - COMPLETE APP.JS
+   ========================================================= */
+
+const SIGNALING_SERVER = "wss://gamecloud-webrtc.onrender.com";
+
+/* ---------------------------------------------------------
+   GAME LIBRARY
+   --------------------------------------------------------- */
+
 const games = [
-  { id: 1, name: "Neon Racer", genre: "Racing", icon: "🏎️", playable: false },
-  { id: 2, name: "Pixel Arena", genre: "Action", icon: "⚔️", playable: false },
-  { id: 3, name: "Sky Quest", genre: "Adventure", icon: "🚀", playable: false },
-  { id: 4, name: "2048", genre: "Puzzle", icon: "🔢", playable: true },
-  { id: 5, name: "Space Drift", genre: "Arcade", icon: "🛸", playable: false },
-  { id: 6, name: "Dungeon Run", genre: "Adventure", icon: "🏰", playable: false },
-  { id: 7, name: "Turbo Kart", genre: "Racing", icon: "🏁", playable: false },
-  { id: 8, name: "Galaxy Defender", genre: "Arcade", icon: "🌌", playable: false },
-  { id: 9, name: "Pokémon UNITE", genre: "MOBA", icon: "⚡", playable: false }
+  {
+    id: "pokemon-unite",
+    title: "Pokémon UNITE",
+    category: "MOBA",
+    icon: "⚡",
+    description: "WebRTC cloud-streaming test",
+    status: "STREAM TEST"
+  },
+  {
+    id: "space-runner",
+    title: "Space Runner",
+    category: "Arcade",
+    icon: "🚀",
+    description: "Fast browser arcade game",
+    status: "PLAY"
+  },
+  {
+    id: "neon-racer",
+    title: "Neon Racer",
+    category: "Racing",
+    icon: "🏎️",
+    description: "High-speed neon racing",
+    status: "PLAY"
+  },
+  {
+    id: "zombie-survival",
+    title: "Zombie Survival",
+    category: "Action",
+    icon: "🧟",
+    description: "Survive as long as possible",
+    status: "PLAY"
+  },
+  {
+    id: "pixel-adventure",
+    title: "Pixel Adventure",
+    category: "Adventure",
+    icon: "🗺️",
+    description: "Explore a pixel world",
+    status: "PLAY"
+  },
+  {
+    id: "block-battle",
+    title: "Block Battle",
+    category: "Arcade",
+    icon: "🧱",
+    description: "Classic block action",
+    status: "PLAY"
+  },
+  {
+    id: "space-shooter",
+    title: "Space Shooter",
+    category: "Shooter",
+    icon: "👾",
+    description: "Defend the galaxy",
+    status: "PLAY"
+  },
+  {
+    id: "football",
+    title: "Football Challenge",
+    category: "Sports",
+    icon: "⚽",
+    description: "Quick football challenge",
+    status: "PLAY"
+  }
 ];
-// GameCloud WebRTC signaling server
-const SIGNALING_SERVER =
-  "wss://gamecloud-webrtc.onrender.com";function connectToSignalingServer(room = "gamecloud-test") {
-  const socket = new WebSocket(SIGNALING_SERVER);
 
-  socket.onopen = () => {
-    console.log("GameCloud WebRTC signaling connected");
+/* ---------------------------------------------------------
+   STATE
+   --------------------------------------------------------- */
 
-    socket.send(JSON.stringify({
-      type: "join",
-      room: room
-    }));
-  };
+let currentGame = null;
+let signalingSocket = null;
+let peerConnection = null;
 
-  socket.onmessage = event => {
-    try {
-      const message = JSON.parse(event.data);
+/* ---------------------------------------------------------
+   STARTUP
+   --------------------------------------------------------- */
 
-      console.log(
-        "GameCloud signaling message:",
-        message
-      );
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("GameCloud starting...");
 
-    } catch (error) {
-      console.error(
-        "Invalid signaling message:",
-        error
-      );
-    }
-  };
+  createGameCloudStyles();
+  setupNavigation();
+  renderGames();
 
-  socket.onerror = error => {
-    console.error(
-      "GameCloud WebRTC signaling error:",
-      error
-    );
-  };
+  console.log("GameCloud ready.");
+});
 
-  socket.onclose = () => {
-    console.log(
-      "GameCloud WebRTC signaling disconnected"
-    );
-  };
+/* ---------------------------------------------------------
+   NAVIGATION
+   --------------------------------------------------------- */
 
-  return socket;
-}
+function setupNavigation() {
+  const homeLinks = document.querySelectorAll(
+    'a[href="#home"], [data-page="home"]'
+  );
 
-const grid = document.querySelector("#gamesGrid");
-const search = document.querySelector("#search");
-const modal = document.querySelector("#modal");
-const content = document.querySelector("#modalContent");
+  homeLinks.forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      showHome();
+    });
+  });
 
-function render(list = games) {
-  if (!grid) return;
+  const gameLinks = document.querySelectorAll(
+    'a[href="#games"], [data-page="games"]'
+  );
 
-  grid.innerHTML = list.map(game => `
-    <article class="game">
-      <div class="cover">${game.icon}</div>
-
-      <div class="game-info">
-        <h3>${game.name}</h3>
-        <p>${game.genre} • Browser</p>
-
-        <button
-          class="playbtn"
-          data-game-id="${game.id}">
-          ${game.playable ? "PLAY NOW" : "COMING SOON"}
-        </button>
-      </div>
-    </article>
-  `).join("");
-
-  grid.querySelectorAll(".playbtn").forEach(button => {
-    button.addEventListener("click", () => {
-      launch(Number(button.dataset.gameId));
+  gameLinks.forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      showGames();
     });
   });
 }
 
+/* ---------------------------------------------------------
+   GAME PAGE
+   --------------------------------------------------------- */
 
-/* =========================
-   GAME LAUNCHER
-========================= */
+function renderGames(filter = "") {
+  const normalizedFilter = filter.toLowerCase().trim();
 
-function launch(id) {
-  const game = games.find(item => item.id === id);
+  let container =
+    document.querySelector("#games-grid") ||
+    document.querySelector(".games-grid") ||
+    document.querySelector("#gameGrid");
 
-  if (!game) return;
+  /*
+   If the existing HTML doesn't contain a game container,
+   create one automatically.
+  */
 
-  if (game.name === "2048") {
-    start2048();
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "games-grid";
+    container.className = "games-grid gamecloud-generated-grid";
+
+    const possibleLibrary =
+      document.querySelector(".library") ||
+      document.querySelector("main") ||
+      document.body;
+
+    possibleLibrary.appendChild(container);
+  }
+
+  const filteredGames = games.filter(game => {
+    return (
+      game.title.toLowerCase().includes(normalizedFilter) ||
+      game.category.toLowerCase().includes(normalizedFilter) ||
+      game.description.toLowerCase().includes(normalizedFilter)
+    );
+  });
+
+  container.innerHTML = "";
+
+  if (filteredGames.length === 0) {
+    container.innerHTML = `
+      <div class="gamecloud-empty">
+        <div class="empty-icon">🎮</div>
+        <h3>No games found</h3>
+        <p>Try another search.</p>
+      </div>
+    `;
+
     return;
   }
 
-  if (game.name === "Pokémon UNITE") {
-    showPokemonUnite();
+  filteredGames.forEach(game => {
+    const card = document.createElement("article");
+
+    card.className = "game-card gamecloud-card";
+
+    card.innerHTML = `
+      <div class="game-cover">
+        <div class="game-icon">${game.icon}</div>
+        <span class="game-category">
+          ${escapeHTML(game.category)}
+        </span>
+      </div>
+
+      <div class="game-info">
+        <h3>${escapeHTML(game.title)}</h3>
+
+        <p>
+          ${escapeHTML(game.description)}
+        </p>
+
+        <button
+          class="game-play-button"
+          data-game="${escapeHTML(game.id)}"
+        >
+          ${game.id === "pokemon-unite"
+            ? "▶ PLAY / STREAM TEST"
+            : "▶ PLAY"}
+        </button>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  container
+    .querySelectorAll(".game-play-button")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        const game = games.find(
+          item => item.id === button.dataset.game
+        );
+
+        if (game) {
+          launchGame(game);
+        }
+      });
+    });
+
+  setupSearch();
+}
+
+/* ---------------------------------------------------------
+   SEARCH
+   --------------------------------------------------------- */
+
+function setupSearch() {
+  const search =
+    document.querySelector("#game-search") ||
+    document.querySelector('input[placeholder*="Search games"]');
+
+  if (!search || search.dataset.gamecloudReady) {
     return;
   }
 
-  showModal(`
-    <h2>${game.icon} ${game.name}</h2>
+  search.dataset.gamecloudReady = "true";
 
-    <div class="notice">
-      This game is currently in the GameCloud library.
-      A legitimate game source can be connected later.
-    </div>
-  `);
-}
-
-
-/* =========================
-   MODAL
-========================= */
-
-function showModal(html) {
-  if (!modal || !content) return;
-
-  content.innerHTML = html;
-  modal.classList.remove("hidden");
-}
-
-function closeModal() {
-  if (modal) {
-    modal.classList.add("hidden");
-  }
-}
-
-if (document.querySelector("#close")) {
-  document.querySelector("#close").addEventListener("click", closeModal);
-}
-
-if (modal) {
-  modal.addEventListener("click", event => {
-    if (event.target === modal) {
-      closeModal();
-    }
+  search.addEventListener("input", event => {
+    renderGames(event.target.value);
   });
 }
 
+/* ---------------------------------------------------------
+   LAUNCH GAME
+   --------------------------------------------------------- */
 
-/* =========================
-   POKÉMON UNITE
-========================= */
-function showPokemonUnite() {
-  showModal(`
-    <div class="game-window">
-      <div class="game-header">
-        <div>
-          <p class="eyebrow">WEBRTC CLOUD PLAY</p>
-          <h2>⚡ Pokémon UNITE</h2>
-        </div>
-        <button class="secondary" id="uniteClose">Close</button>
-      </div>
+function launchGame(game) {
+  currentGame = game;
 
-      <div class="player unite-player" id="unitePlayer">
-        <div>
-          <div style="font-size:64px">🎮</div>
-          <h2>GameCloud Streaming</h2>
-          <p>WebRTC test player</p>
-          <button class="primary" id="startWebRTC">
-            ▶ START STREAM TEST
-          </button>
-        </div>
-      </div>
+  if (game.id === "pokemon-unite") {
+    openStreamingPlayer(game);
+    return;
+  }
 
-      <div class="notice">
-        This is a WebRTC connectivity test.
-        It does not contain or copy Pokémon UNITE.
-      </div>
-    </div>
-  `);
-
-  document.querySelector("#uniteClose")?.addEventListener(
-    "click",
-    closeModal
-  );
-
-  document.querySelector("#startWebRTC")?.addEventListener(
-    "click",
-    startWebRTCTest
-  );
+  openBrowserGame(game);
 }
-let testSocket = null;
-let testPeer = null;
 
-async function startWebRTCTest() {
-  const player = document.querySelector("#unitePlayer");
+/* ---------------------------------------------------------
+   BROWSER GAME
+   --------------------------------------------------------- */
 
-  if (!player) return;
+function openBrowserGame(game) {
+  const modal = createModal();
 
-  player.innerHTML = `
-    <div>
-      <div style="font-size:55px">📡</div>
-      <h2>Connecting...</h2>
-      <p id="webrtcStatus">
-        Connecting to GameCloud signaling server
-      </p>
+  modal.innerHTML = `
+    <div class="gamecloud-player-window">
+
+      <div class="gamecloud-player-header">
+
+        <div>
+          <div class="gamecloud-small-title">
+            GAMECLOUD
+          </div>
+
+          <h2>
+            ${game.icon}
+            ${escapeHTML(game.title)}
+          </h2>
+        </div>
+
+        <button
+          class="gamecloud-close"
+          id="gamecloud-close"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div
+        class="gamecloud-game-area"
+        id="browser-game-area"
+      >
+        <div class="gamecloud-game-message">
+
+          <div class="big-game-icon">
+            ${game.icon}
+          </div>
+
+          <h2>
+            ${escapeHTML(game.title)}
+          </h2>
+
+          <p>
+            Browser-game demo player
+          </p>
+
+          <button
+            class="gamecloud-primary"
+            id="start-demo-game"
+          >
+            START GAME
+          </button>
+
+        </div>
+      </div>
+
     </div>
   `;
 
-  testSocket = new WebSocket(
-    "wss://gamecloud-webrtc.onrender.com"
-  );
+  document
+    .querySelector("#gamecloud-close")
+    ?.addEventListener("click", closeModal);
 
-  testSocket.onopen = () => {
-    updateWebRTCStatus(
-      "Connected to signaling server"
+  document
+    .querySelector("#start-demo-game")
+    ?.addEventListener("click", () => {
+      startSimpleDemoGame(game);
+    });
+}
+
+/* ---------------------------------------------------------
+   SIMPLE DEMO GAME
+   --------------------------------------------------------- */
+
+function startSimpleDemoGame(game) {
+  const area =
+    document.querySelector("#browser-game-area");
+
+  if (!area) return;
+
+  area.innerHTML = `
+    <div
+      id="demo-game"
+      class="demo-game"
+      tabindex="0"
+    >
+
+      <div class="demo-score">
+        SCORE:
+        <span id="demo-score">0</span>
+      </div>
+
+      <div class="demo-instructions">
+        Use ← → keys to move
+      </div>
+
+      <div
+        id="demo-player"
+        class="demo-player"
+      >
+        ${game.icon}
+      </div>
+
+      <div
+        id="demo-target"
+        class="demo-target"
+      >
+        ⭐
+      </div>
+
+    </div>
+  `;
+
+  const demo = document.querySelector("#demo-game");
+  const player = document.querySelector("#demo-player");
+  const target = document.querySelector("#demo-target");
+  const scoreElement = document.querySelector("#demo-score");
+
+  let playerX = 50;
+  let targetX = 70;
+  let score = 0;
+
+  demo.focus();
+
+  function update() {
+    player.style.left = `${playerX}%`;
+    target.style.left = `${targetX}%`;
+
+    if (Math.abs(playerX - targetX) < 7) {
+      score++;
+      scoreElement.textContent = score;
+
+      targetX = Math.floor(
+        Math.random() * 80 + 10
+      );
+    }
+  }
+
+  demo.addEventListener("keydown", event => {
+    if (event.key === "ArrowLeft") {
+      playerX -= 5;
+    }
+
+    if (event.key === "ArrowRight") {
+      playerX += 5;
+    }
+
+    playerX = Math.max(
+      5,
+      Math.min(95, playerX)
     );
 
-    testSocket.send(JSON.stringify({
-      type: "join",
-      room: "gamecloud-test"
-    }));
+    update();
+  });
 
-    createWebRTCPeer();
-  };
+  update();
+}
 
-  testSocket.onmessage = async event => {
-    const message = JSON.parse(event.data);
+/* ---------------------------------------------------------
+   WEBRTC STREAMING PLAYER
+   --------------------------------------------------------- */
 
-    if (!testPeer) return;
+function openStreamingPlayer(game) {
+  const modal = createModal();
 
-    if (message.type === "offer") {
-      await testPeer.setRemoteDescription(
-        message.offer
+  modal.innerHTML = `
+    <div class="gamecloud-player-window">
+
+      <div class="gamecloud-player-header">
+
+        <div>
+          <div class="gamecloud-small-title">
+            GAMECLOUD CLOUD STREAM
+          </div>
+
+          <h2>
+            ${game.icon}
+            ${escapeHTML(game.title)}
+          </h2>
+        </div>
+
+        <button
+          class="gamecloud-close"
+          id="gamecloud-close"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div
+        id="webrtc-player"
+        class="gamecloud-video-area"
+      >
+
+        <div class="stream-message">
+
+          <div class="stream-icon">
+            📡
+          </div>
+
+          <h2>
+            Ready to stream
+          </h2>
+
+          <p id="webrtc-status">
+            Click the button to connect.
+          </p>
+
+          <button
+            id="start-stream"
+            class="gamecloud-primary"
+          >
+            ▶ START STREAM TEST
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="stream-footer">
+        <span>● WebRTC</span>
+        <span id="connection-state">
+          Not connected
+        </span>
+      </div>
+
+    </div>
+  `;
+
+  document
+    .querySelector("#gamecloud-close")
+    ?.addEventListener("click", () => {
+      stopWebRTC();
+      closeModal();
+    });
+
+  document
+    .querySelector("#start-stream")
+    ?.addEventListener("click", startWebRTC);
+}
+
+/* ---------------------------------------------------------
+   WEBRTC CONNECTION
+   --------------------------------------------------------- */
+
+function startWebRTC() {
+  const status =
+    document.querySelector("#webrtc-status");
+
+  const button =
+    document.querySelector("#start-stream");
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "CONNECTING...";
+  }
+
+  updateStatus(
+    "Connecting to GameCloud streaming server..."
+  );
+
+  try {
+    signalingSocket = new WebSocket(
+      SIGNALING_SERVER
+    );
+
+    signalingSocket.onopen = () => {
+      console.log(
+        "Connected to GameCloud signaling server"
       );
 
-      const answer =
-        await testPeer.createAnswer();
-
-      await testPeer.setLocalDescription(answer);
-
-      testSocket.send(JSON.stringify({
-        type: "answer",
-        answer: answer
-      }));
-    }
-
-    if (message.type === "answer") {
-      await testPeer.setRemoteDescription(
-        message.answer
+      updateStatus(
+        "Connected. Waiting for streaming computer..."
       );
-    }
 
-    if (message.type === "candidate") {
+      signalingSocket.send(
+        JSON.stringify({
+          type: "join",
+          room: "gamecloud-test"
+        })
+      );
+
+      createPeerConnection();
+    };
+
+    signalingSocket.onmessage = async event => {
       try {
-        await testPeer.addIceCandidate(
-          message.candidate
-        );
+        const message =
+          JSON.parse(event.data);
+
+        await handleSignalingMessage(message);
       } catch (error) {
-        console.log(
-          "ICE candidate error",
+        console.error(
+          "WebRTC message error:",
           error
         );
       }
-    }
-  };
+    };
 
-  testSocket.onerror = () => {
-    updateWebRTCStatus(
-      "Could not connect to signaling server"
-    );
-  };
+    signalingSocket.onerror = error => {
+      console.error(
+        "WebRTC signaling error:",
+        error
+      );
 
-  testSocket.onclose = () => {
-    console.log(
-      "WebRTC signaling connection closed"
+      updateStatus(
+        "Unable to connect to streaming server."
+      );
+
+      resetStreamButton();
+    };
+
+    signalingSocket.onclose = () => {
+      console.log(
+        "Signaling connection closed."
+      );
+    };
+
+  } catch (error) {
+    console.error(error);
+
+    updateStatus(
+      "WebRTC connection could not start."
     );
-  };
+
+    resetStreamButton();
+  }
 }
 
-function createWebRTCPeer() {
-  testPeer = new RTCPeerConnection({
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302"
+/* ---------------------------------------------------------
+   PEER CONNECTION
+   --------------------------------------------------------- */
+
+function createPeerConnection() {
+  peerConnection =
+    new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302"
+        }
+      ]
+    });
+
+  peerConnection.onicecandidate =
+    event => {
+
+      if (
+        event.candidate &&
+        signalingSocket &&
+        signalingSocket.readyState ===
+          WebSocket.OPEN
+      ) {
+        signalingSocket.send(
+          JSON.stringify({
+            type: "candidate",
+            candidate: event.candidate
+          })
+        );
       }
-    ]
-  });
+    };
 
-  testPeer.onicecandidate = event => {
-    if (
-      event.candidate &&
-      testSocket &&
-      testSocket.readyState === WebSocket.OPEN
-    ) {
-      testSocket.send(JSON.stringify({
-        type: "candidate",
-        candidate: event.candidate
-      }));
+  peerConnection.ontrack =
+    event => {
+
+      console.log(
+        "Received remote stream."
+      );
+
+      const player =
+        document.querySelector(
+          "#webrtc-player"
+        );
+
+      if (!player) return;
+
+      player.innerHTML = "";
+
+      const video =
+        document.createElement("video");
+
+      video.autoplay = true;
+      video.playsInline = true;
+      video.controls = false;
+
+      if (event.streams[0]) {
+        video.srcObject =
+          event.streams[0];
+      }
+
+      video.className =
+        "gamecloud-stream-video";
+
+      player.appendChild(video);
+    };
+
+  peerConnection.onconnectionstatechange =
+    () => {
+
+      const state =
+        peerConnection.connectionState;
+
+      console.log(
+        "WebRTC state:",
+        state
+      );
+
+      const stateElement =
+        document.querySelector(
+          "#connection-state"
+        );
+
+      if (stateElement) {
+        stateElement.textContent =
+          state;
+      }
+
+      if (state === "connected") {
+        updateStatus(
+          "Streaming connection established!"
+        );
+      }
+
+      if (state === "failed") {
+        updateStatus(
+          "WebRTC connection failed."
+        );
+      }
+    };
+
+  peerConnection.ondatachannel =
+    event => {
+
+      const channel =
+        event.channel;
+
+      console.log(
+        "Input channel received:",
+        channel.label
+      );
+
+      setupInputChannel(channel);
+    };
+}
+
+/* ---------------------------------------------------------
+   SIGNALING
+   --------------------------------------------------------- */
+
+async function handleSignalingMessage(message) {
+
+  if (!peerConnection) return;
+
+  if (message.type === "offer") {
+
+    await peerConnection.setRemoteDescription(
+      new RTCSessionDescription(
+        message.offer
+      )
+    );
+
+    const answer =
+      await peerConnection.createAnswer();
+
+    await peerConnection.setLocalDescription(
+      answer
+    );
+
+    signalingSocket.send(
+      JSON.stringify({
+        type: "answer",
+        answer: answer
+      })
+    );
+  }
+
+  if (message.type === "answer") {
+
+    await peerConnection.setRemoteDescription(
+      new RTCSessionDescription(
+        message.answer
+      )
+    );
+  }
+
+  if (message.type === "candidate") {
+
+    try {
+
+      await peerConnection.addIceCandidate(
+        new RTCIceCandidate(
+          message.candidate
+        )
+      );
+
+    } catch (error) {
+
+      console.log(
+        "ICE candidate error:",
+        error
+      );
+
     }
-  };
+  }
+}
 
-  testPeer.onconnectionstatechange = () => {
-    updateWebRTCStatus(
-      "Connection: " +
-      testPeer.connectionState
+/* ---------------------------------------------------------
+   GAME INPUT
+   --------------------------------------------------------- */
+
+let inputChannel = null;
+
+function setupInputChannel(channel) {
+
+  inputChannel = channel;
+
+  channel.onopen = () => {
+    console.log(
+      "Game input channel connected."
     );
   };
 
-  testPeer.ontrack = event => {
-    const player =
-      document.querySelector("#unitePlayer");
-
-    if (!player) return;
-
-    player.innerHTML = "";
-
-    const video =
-      document.createElement("video");
-
-    video.autoplay = true;
-    video.playsInline = true;
-    video.controls = true;
-
-    if (event.streams[0]) {
-      video.srcObject =
-        event.streams[0];
-    }
-
-    video.style.width = "100%";
-    video.style.height = "100%";
-    video.style.objectFit = "contain";
-
-    player.appendChild(video);
+  channel.onclose = () => {
+    console.log(
+      "Game input channel closed."
+    );
   };
+
+  document.addEventListener(
+    "keydown",
+    sendKeyboardInput
+  );
+
+  document.addEventListener(
+    "keyup",
+    sendKeyboardInput
+  );
 }
 
-function updateWebRTCStatus(message) {
+function sendKeyboardInput(event) {
+
+  if (
+    !inputChannel ||
+    inputChannel.readyState !== "open"
+  ) {
+    return;
+  }
+
+  const message = {
+    type:
+      event.type === "keydown"
+        ? "keydown"
+        : "keyup",
+
+    key: event.key,
+
+    code: event.code
+  };
+
+  inputChannel.send(
+    JSON.stringify(message)
+  );
+}
+
+/* ---------------------------------------------------------
+   STATUS
+   --------------------------------------------------------- */
+
+function updateStatus(message) {
+
   const status =
-    document.querySelector("#webrtcStatus");
+    document.querySelector(
+      "#webrtc-status"
+    );
 
   if (status) {
     status.textContent = message;
   }
+
+  console.log(
+    "GameCloud:",
+    message
+  );
 }
-  const closeButton =
-    document.querySelector("#uniteClose");
 
-  if (closeButton) {
-    closeButton.addEventListener(
-      "click",
-      closeModal
-    );
-  }
+function resetStreamButton() {
 
-
-  const playButton =
-    document.querySelector("#unitePlay");
-
-  if (playButton) {
-
-    playButton.addEventListener(
-      "click",
-      () => {
-
-        const player =
-          document.querySelector(".unite-player");
-
-        if (!player) return;
-
-        player.innerHTML = `
-
-          <div>
-
-            <div style="font-size:64px">
-              🎮
-            </div>
-
-            <h2>
-              Waiting for game server
-            </h2>
-
-            <p>
-              GameCloud is ready for a
-              legitimate streaming connection.
-            </p>
-
-            <div class="notice">
-
-              Server status:
-              <b style="color:#49df8a">
-                READY
-              </b>
-
-            </div>
-
-          </div>
-
-        `;
-
-      }
+  const button =
+    document.querySelector(
+      "#start-stream"
     );
 
-  }
+  if (!button) return;
 
+  button.disabled = false;
+  button.textContent =
+    "▶ START STREAM TEST";
 }
 
+/* ---------------------------------------------------------
+   STOP WEBRTC
+   --------------------------------------------------------- */
 
-/* =========================
-   2048 GAME
-========================= */
+function stopWebRTC() {
 
-let board = [];
-let score = 0;
-
-
-function start2048() {
-
-  showModal(`
-
-    <div class="game-window">
-
-      <div class="game-header">
-
-        <div>
-
-          <p class="eyebrow">
-            PLAYING NOW
-          </p>
-
-          <h2>
-            🔢 2048
-          </h2>
-
-        </div>
-
-        <button
-          class="secondary"
-          id="newGame">
-
-          New Game
-
-        </button>
-
-      </div>
-
-
-      <div class="score-box">
-
-        Score:
-        <strong id="score">
-          0
-        </strong>
-
-      </div>
-
-
-      <div
-        id="board"
-        class="board">
-      </div>
-
-
-      <div class="controls">
-
-        <button data-move="up">
-          ⬆️
-        </button>
-
-        <button data-move="left">
-          ⬅️
-        </button>
-
-        <button data-move="down">
-          ⬇️
-        </button>
-
-        <button data-move="right">
-          ➡️
-        </button>
-
-      </div>
-
-
-      <p class="game-help">
-
-        Use your keyboard arrow keys
-        or the buttons.
-
-      </p>
-
-    </div>
-
-  `);
-
-
-  add2048Styles();
-
-
-  const newGame =
-    document.querySelector("#newGame");
-
-  if (newGame) {
-    newGame.addEventListener(
-      "click",
-      newGame2048
-    );
+  if (inputChannel) {
+    try {
+      inputChannel.close();
+    } catch {}
   }
 
+  inputChannel = null;
 
-  document
-    .querySelectorAll("[data-move]")
-    .forEach(button => {
+  if (peerConnection) {
+    try {
+      peerConnection.close();
+    } catch {}
+  }
 
-      button.addEventListener(
-        "click",
-        () => {
+  peerConnection = null;
 
-          move2048(
-            button.dataset.move
-          );
+  if (signalingSocket) {
+    try {
+      signalingSocket.close();
+    } catch {}
+  }
 
-        }
-      );
+  signalingSocket = null;
 
-    });
+  document.removeEventListener(
+    "keydown",
+    sendKeyboardInput
+  );
 
-
-  newGame2048();
+  document.removeEventListener(
+    "keyup",
+    sendKeyboardInput
+  );
 }
 
+/* ---------------------------------------------------------
+   MODAL
+   --------------------------------------------------------- */
 
-function newGame2048() {
+function createModal() {
 
-  board =
-    Array.from(
-      { length: 4 },
-      () => Array(4).fill(0)
+  closeModal();
+
+  const modal =
+    document.createElement("div");
+
+  modal.id =
+    "gamecloud-modal";
+
+  modal.className =
+    "gamecloud-modal";
+
+  document.body.appendChild(modal);
+
+  return modal;
+}
+
+function closeModal() {
+
+  const modal =
+    document.querySelector(
+      "#gamecloud-modal"
     );
 
-  score = 0;
+  if (modal) {
+    modal.remove();
+  }
 
-  addTile();
-  addTile();
-
-  draw2048();
+  stopWebRTC();
 }
 
+/* ---------------------------------------------------------
+   HOME / GAMES
+   --------------------------------------------------------- */
 
-function addTile() {
+function showHome() {
 
-  const empty = [];
-
-
-  for (let row = 0; row < 4; row++) {
-
-    for (let col = 0; col < 4; col++) {
-
-      if (board[row][col] === 0) {
-
-        empty.push([
-          row,
-          col
-        ]);
-
-      }
-
-    }
-
-  }
-
-
-  if (empty.length === 0) {
-    return;
-  }
-
-
-  const position =
-    empty[
-      Math.floor(
-        Math.random() * empty.length
-      )
-    ];
-
-
-  const row = position[0];
-  const col = position[1];
-
-
-  board[row][col] =
-    Math.random() < 0.9
-      ? 2
-      : 4;
-}
-
-
-function draw2048() {
-
-  const boardElement =
-    document.querySelector("#board");
-
-  const scoreElement =
-    document.querySelector("#score");
-
-
-  if (!boardElement) {
-    return;
-  }
-
-
-  boardElement.innerHTML = "";
-
-
-  board.forEach(row => {
-
-    row.forEach(value => {
-
-      const tile =
-        document.createElement("div");
-
-
-      tile.className = "tile";
-
-
-      tile.textContent =
-        value || "";
-
-
-      if (value) {
-
-        tile.dataset.value =
-          value;
-
-      }
-
-
-      boardElement.appendChild(tile);
-
-    });
-
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
   });
-
-
-  if (scoreElement) {
-
-    scoreElement.textContent =
-      score;
-
-  }
-
 }
 
+function showGames() {
 
-function mergeLine(line) {
+  const gamesSection =
+    document.querySelector(
+      "#games"
+    ) ||
+    document.querySelector(
+      ".games"
+    );
 
-  const numbers =
-    line.filter(value => value !== 0);
+  if (gamesSection) {
 
-  const result = [];
+    gamesSection.scrollIntoView({
+      behavior: "smooth"
+    });
 
+  } else {
 
-  for (
-    let index = 0;
-    index < numbers.length;
-    index++
-  ) {
-
-    if (
-      numbers[index] ===
-      numbers[index + 1]
-    ) {
-
-      const merged =
-        numbers[index] * 2;
-
-
-      result.push(merged);
-
-
-      score += merged;
-
-
-      index++;
-
-    } else {
-
-      result.push(
-        numbers[index]
-      );
-
-    }
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
 
   }
 
-
-  while (
-    result.length < 4
-  ) {
-
-    result.push(0);
-
-  }
-
-
-  return result;
+  renderGames();
 }
 
+/* ---------------------------------------------------------
+   SECURITY
+   --------------------------------------------------------- */
 
-function move2048(direction) {
+function escapeHTML(value) {
 
-  const oldBoard =
-    JSON.stringify(board);
-
-
-  if (direction === "left") {
-
-    for (
-      let row = 0;
-      row < 4;
-      row++
-    ) {
-
-      board[row] =
-        mergeLine(
-          board[row]
-        );
-
-    }
-
-  }
-
-
-  if (direction === "right") {
-
-    for (
-      let row = 0;
-      row < 4;
-      row++
-    ) {
-
-      board[row] =
-        mergeLine(
-          [...board[row]].reverse()
-        ).reverse();
-
-    }
-
-  }
-
-
-  if (direction === "up") {
-
-    for (
-      let col = 0;
-      col < 4;
-      col++
-    ) {
-
-      const column =
-        board.map(
-          row => row[col]
-        );
-
-
-      const merged =
-        mergeLine(column);
-
-
-      for (
-        let row = 0;
-        row < 4;
-        row++
-      ) {
-
-        board[row][col] =
-          merged[row];
-
-      }
-
-    }
-
-  }
-
-
-  if (direction === "down") {
-
-    for (
-      let col = 0;
-      col < 4;
-      col++
-    ) {
-
-      const column =
-        board.map(
-          row => row[col]
-        );
-
-
-      const merged =
-        mergeLine(
-          column.reverse()
-        ).reverse();
-
-
-      for (
-        let row = 0;
-        row < 4;
-        row++
-      ) {
-
-        board[row][col] =
-          merged[row];
-
-      }
-
-    }
-
-  }
-
-
-  if (
-    JSON.stringify(board) !==
-    oldBoard
-  ) {
-
-    addTile();
-
-    draw2048();
-
-  }
-
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
+/* ---------------------------------------------------------
+   GAMECLOUD STYLES
+   --------------------------------------------------------- */
 
-/* =========================
-   KEYBOARD CONTROLS
-========================= */
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      !modal ||
-      modal.classList.contains("hidden")
-    ) {
-      return;
-    }
-
-
-    const controls = {
-
-      ArrowUp: "up",
-
-      ArrowDown: "down",
-
-      ArrowLeft: "left",
-
-      ArrowRight: "right"
-
-    };
-
-
-    const direction =
-      controls[event.key];
-
-
-    if (direction) {
-
-      event.preventDefault();
-
-      move2048(direction);
-
-    }
-
-  }
-);
-
-
-/* =========================
-   2048 STYLES
-========================= */
-
-function add2048Styles() {
+function createGameCloudStyles() {
 
   if (
     document.querySelector(
-      "#game2048styles"
+      "#gamecloud-generated-styles"
     )
   ) {
     return;
   }
 
-
   const style =
     document.createElement("style");
 
-
   style.id =
-    "game2048styles";
-
+    "gamecloud-generated-styles";
 
   style.textContent = `
 
-    .game-window {
-      max-width: 520px;
-      margin: auto;
+    .gamecloud-generated-grid {
+      display: grid !important;
+      grid-template-columns:
+        repeat(auto-fill, minmax(240px, 1fr));
+      gap: 24px;
+      width: 100%;
+      margin-top: 30px;
     }
 
+    .gamecloud-card {
+      overflow: hidden;
+      border-radius: 18px;
+      background: #101219;
+      border: 1px solid #252a36;
+      transition:
+        transform .2s ease,
+        border-color .2s ease;
+    }
 
-    .game-header {
+    .gamecloud-card:hover {
+      transform: translateY(-5px);
+      border-color: #7856ff;
+    }
+
+    .game-cover {
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background:
+        radial-gradient(
+          circle at center,
+          #38206b,
+          #101219 70%
+        );
+    }
+
+    .game-icon {
+      font-size: 72px;
+    }
+
+    .game-category {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #171a23;
+      color: #a98cff;
+    }
+
+    .game-info {
+      padding: 18px;
+    }
+
+    .game-info h3 {
+      margin: 0 0 8px;
+      font-size: 21px;
+    }
+
+    .game-info p {
+      margin: 0 0 18px;
+      min-height: 42px;
+      color: #9da3b4;
+      line-height: 1.5;
+    }
+
+    .game-play-button,
+    .gamecloud-primary {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      color: white;
+      background: #7652ff;
+    }
+
+    .game-play-button:hover,
+    .gamecloud-primary:hover {
+      background: #8a6cff;
+    }
+
+    .game-play-button:disabled,
+    .gamecloud-primary:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .gamecloud-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 70px 20px;
+      color: #9da3b4;
+    }
+
+    .empty-icon {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+
+    .gamecloud-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      background: rgba(0,0,0,.88);
+    }
+
+    .gamecloud-player-window {
+      width: min(1100px, 100%);
+      max-height: 90vh;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid #2c3040;
+      background: #0d0f15;
+      box-shadow:
+        0 30px 100px rgba(0,0,0,.7);
+    }
+
+    .gamecloud-player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #252936;
+    }
+
+    .gamecloud-player-header h2 {
+      margin: 4px 0 0;
+    }
+
+    .gamecloud-small-title {
+      color: #896aff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .gamecloud-close {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #333847;
+      border-radius: 10px;
+      background: #151821;
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .gamecloud-video-area {
+      height: min(65vh, 650px);
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #05060a;
+    }
+
+    .gamecloud-stream-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .stream-message,
+    .gamecloud-game-message {
+      text-align: center;
+      max-width: 450px;
+      padding: 30px;
+    }
+
+    .stream-icon,
+    .big-game-icon {
+      font-size: 65px;
+      margin-bottom: 15px;
+    }
+
+    .stream-message p,
+    .gamecloud-game-message p {
+      color: #9da3b4;
+      margin-bottom: 25px;
+    }
+
+    .stream-footer {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-    }
-
-
-    .game-header h2 {
-      margin: 5px 0 0;
-    }
-
-
-    .score-box {
-      margin: 18px 0;
-      padding: 12px;
-      background: #171b24;
-      border: 1px solid #303642;
-      border-radius: 10px;
-      text-align: center;
-      color: #aab2c0;
-    }
-
-
-    .board {
-      display: grid;
-      grid-template-columns:
-        repeat(4, 1fr);
-
-      gap: 8px;
-
-      background: #292d38;
-
-      padding: 8px;
-
-      border-radius: 12px;
-
-      aspect-ratio: 1;
-    }
-
-
-    .tile {
-      display: grid;
-      place-items: center;
-
-      background: #3a3f4c;
-
-      border-radius: 8px;
-
-      font-size:
-        clamp(20px, 6vw, 34px);
-
-      font-weight: 900;
-    }
-
-
-    .tile[data-value="2"] {
-      background: #eee4da;
-      color: #333;
-    }
-
-
-    .tile[data-value="4"] {
-      background: #ede0c8;
-      color: #333;
-    }
-
-
-    .tile[data-value="8"] {
-      background: #f2b179;
-      color: white;
-    }
-
-
-    .tile[data-value="16"] {
-      background: #f59563;
-      color: white;
-    }
-
-
-    .tile[data-value="32"] {
-      background: #f67c5f;
-      color: white;
-    }
-
-
-    .tile[data-value="64"] {
-      background: #f65e3b;
-      color: white;
-    }
-
-
-    .tile[data-value="128"],
-    .tile[data-value="256"],
-    .tile[data-value="512"],
-    .tile[data-value="1024"],
-    .tile[data-value="2048"] {
-      background: #edc850;
-      color: white;
-    }
-
-
-    .controls {
-      display: grid;
-
-      grid-template-columns:
-        repeat(4, 1fr);
-
-      gap: 8px;
-
-      margin-top: 15px;
-    }
-
-
-    .controls button {
-      border: 1px solid #343a48;
-
-      background: #171b24;
-
-      color: white;
-
-      border-radius: 9px;
-
-      padding: 12px;
-
-      font-size: 18px;
-
-      cursor: pointer;
-    }
-
-
-    .controls button:hover {
-      background: #242a36;
-    }
-
-
-    .game-help {
-      text-align: center;
-
-      color: #8992a2;
-
+      padding: 12px 20px;
+      color: #8f96a8;
       font-size: 13px;
+      border-top: 1px solid #252936;
+    }
+
+    .gamecloud-game-area {
+      height: 550px;
+      background: #07080d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .demo-game {
+      position: relative;
+      width: 90%;
+      height: 90%;
+      overflow: hidden;
+      border: 1px solid #33384a;
+      border-radius: 15px;
+      background:
+        radial-gradient(
+          circle at center,
+          #24154d,
+          #080910 70%
+        );
+      outline: none;
+    }
+
+    .demo-score {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 5;
+      font-weight: 800;
+    }
+
+    .demo-instructions {
+      position: absolute;
+      top: 45px;
+      left: 15px;
+      color: #a0a6b7;
+      font-size: 13px;
+    }
+
+    .demo-player,
+    .demo-target {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 45px;
+    }
+
+    .demo-target {
+      top: 65%;
+    }
+
+    @media (max-width: 700px) {
+
+      .gamecloud-generated-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .gamecloud-modal {
+        padding: 10px;
+      }
+
+      .gamecloud-player-window {
+        max-height: 96vh;
+      }
+
+      .gamecloud-video-area {
+        min-height: 300px;
+      }
+
     }
 
   `;
 
-
   document.head.appendChild(style);
 }
 
+/* ---------------------------------------------------------
+   GLOBAL ACCESS
+   --------------------------------------------------------- */
 
-/* =========================
-   SEARCH
-========================= */
-
-if (search) {
-
-  search.addEventListener(
-    "input",
-    event => {
-
-      const query =
-        event.target.value
-          .toLowerCase()
-          .trim();
-
-
-      const filtered =
-        games.filter(game => {
-
-          const text =
-            `${game.name} ${game.genre}`
-              .toLowerCase();
-
-
-          return text.includes(query);
-
-        });
-
-
-      render(filtered);
-
-    }
-  );
-
-}
-
-
-/* =========================
-   RANDOM GAME
-========================= */
-
-const randomButton =
-  document.querySelector(
-    "#randomBtn"
-  );
-
-
-if (randomButton) {
-
-  randomButton.addEventListener(
-    "click",
-    () => {
-
-      launch(4);
-
-    }
-  );
-
-}
-
-
-/* =========================
-   LOGIN
-========================= */
-
-const loginButton =
-  document.querySelector(
-    "#loginBtn"
-  );
-
-
-if (loginButton) {
-
-  loginButton.addEventListener(
-    "click",
-    () => {
-
-      showModal(`
-
-        <h2>
-          Sign in
-        </h2>
-
-        <p
-          style="
-            color:#9aa3b2
-          "
-        >
-          Supabase authentication
-          can be connected later.
-        </p>
-
-      `);
-
-    }
-  );
-
-}
-
-
-/* =========================
-   START// GameCloud deployment test
-========================= */
-
-render();const signalingSocket =
-  connectToSignalingServer();
+window.GameCloud = {
+  games,
+  renderGames,
+  launchGame,
+  startWebRTC,
+  stopWebRTC
+};
