@@ -2,120 +2,80 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/favicon.ico") {
-      return new Response("", { status: 204 });
+    if (url.pathname === "/") {
+      return new Response(HTML, {
+        headers: {
+          "content-type": "text/html; charset=UTF-8"
+        }
+      });
     }
 
-    return new Response(HTML, {
-      headers: {
-        "content-type": "text/html; charset=UTF-8",
-        "cache-control": "no-cache"
-      }
-    });
+    return new Response("Not Found", { status: 404 });
   }
 };
 
-const GAMES = [
-  {
-    id: "snake",
-    title: "Snake",
-    category: "Classic",
-    emoji: "🐍",
-    description: "Classic snake game. Eat the food and grow.",
-    color: "#22c55e"
-  },
-  {
-    id: "racing",
-    title: "Neon Racing",
-    category: "Racing",
-    emoji: "🏎️",
-    description: "Avoid traffic and survive as long as possible.",
-    color: "#ef4444"
-  },
+const games = [
   {
     id: "space",
     title: "Space Shooter",
     category: "Action",
-    emoji: "🚀",
-    description: "Destroy incoming enemies and survive.",
-    color: "#8b5cf6"
+    icon: "🚀",
+    description: "Destroy incoming asteroids and survive as long as possible."
+  },
+  {
+    id: "snake",
+    title: "Snake",
+    category: "Arcade",
+    icon: "🐍",
+    description: "Eat the food and grow your snake."
+  },
+  {
+    id: "runner",
+    title: "Neon Runner",
+    category: "Endless",
+    icon: "🏃",
+    description: "Jump over obstacles and survive."
   },
   {
     id: "breakout",
     title: "Brick Breaker",
     category: "Arcade",
-    emoji: "🧱",
-    description: "Break every brick with your ball.",
-    color: "#f59e0b"
-  },
-  {
-    id: "pong",
-    title: "Pong",
-    category: "Sports",
-    emoji: "🏓",
-    description: "Classic paddle versus computer.",
-    color: "#06b6d4"
-  },
-  {
-    id: "runner",
-    title: "Cyber Runner",
-    category: "Skill",
-    emoji: "🏃",
-    description: "Jump over obstacles and set a high score.",
-    color: "#ec4899"
-  },
-  {
-    id: "2048",
-    title: "2048",
-    category: "Puzzle",
-    emoji: "🔢",
-    description: "Combine matching numbers to reach 2048.",
-    color: "#f97316"
-  },
-  {
-    id: "tictactoe",
-    title: "Tic-Tac-Toe",
-    category: "Strategy",
-    emoji: "❌",
-    description: "Beat the computer in this classic strategy game.",
-    color: "#3b82f6"
+    icon: "🧱",
+    description: "Break all the bricks with your paddle."
   },
   {
     id: "memory",
     title: "Memory Match",
     category: "Puzzle",
-    emoji: "🃏",
-    description: "Find all matching pairs.",
-    color: "#a855f7"
-  },
-  {
-    id: "mines",
-    title: "Mines",
-    category: "Strategy",
-    emoji: "💣",
-    description: "Clear the board without hitting a mine.",
-    color: "#64748b"
-  },
-  {
-    id: "reaction",
-    title: "Reaction Test",
-    category: "Skill",
-    emoji: "🎯",
-    description: "Test how quickly you can react.",
-    color: "#14b8a6"
+    icon: "🧠",
+    description: "Match all the hidden pairs."
   },
   {
     id: "clicker",
-    title: "Space Clicker",
-    category: "Arcade",
-    emoji: "🌟",
-    description: "Click the star and build your score.",
-    color: "#eab308"
+    title: "Monster Clicker",
+    category: "Casual",
+    icon: "👾",
+    description: "Click the monster and get the highest score."
+  },
+  {
+    id: "racing",
+    title: "Highway Racer",
+    category: "Racing",
+    icon: "🏎️",
+    description: "Avoid traffic and drive as far as you can."
+  },
+  {
+    id: "pong",
+    title: "Pong",
+    category: "Sports",
+    icon: "🏓",
+    description: "Classic paddle-versus-paddle action."
   }
 ];
 
-const HTML = `<!DOCTYPE html>
-<html lang="en">
+const HTML = `
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -128,22 +88,19 @@ const HTML = `<!DOCTYPE html>
 
 body {
   margin: 0;
-  background: #05070b;
-  color: #f8fafc;
+  background: #07090d;
+  color: white;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-nav {
-  height: 74px;
-  border-bottom: 1px solid #1d2430;
+header {
+  height: 76px;
+  border-bottom: 1px solid #20242d;
   display: flex;
   align-items: center;
   padding: 0 5%;
-  gap: 42px;
-  background: rgba(5,7,11,.95);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  gap: 45px;
+  background: #080a0f;
 }
 
 .logo {
@@ -153,146 +110,153 @@ nav {
 }
 
 .logo span {
-  color: #8257ff;
+  color: #855cff;
 }
 
-.navlink {
-  color: #a8b0bf;
+nav a {
+  color: #aeb4c2;
   text-decoration: none;
+  margin-right: 30px;
   cursor: pointer;
 }
 
-.navlink:hover {
+nav a:hover {
   color: white;
 }
 
-main {
-  width: min(1200px, 90%);
-  margin: auto;
+.signin {
+  margin-left: auto;
+  background: #11151d;
+  border: 1px solid #303642;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
 }
 
 .hero {
-  padding: 75px 0 35px;
+  padding: 70px 7% 35px;
 }
 
-.kicker {
-  color: #9670ff;
+.small {
+  color: #8c65ff;
   font-weight: bold;
   letter-spacing: 3px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 h1 {
-  font-size: clamp(45px,7vw,80px);
+  font-size: clamp(45px, 7vw, 82px);
+  margin: 12px 0;
   line-height: .95;
-  margin: 15px 0;
 }
 
 .gradient {
-  color: #8b5cf6;
+  color: #8b63ff;
 }
 
-.hero p {
-  color: #9ba4b3;
-  max-width: 650px;
+.subtitle {
+  color: #aeb4c2;
   font-size: 18px;
-  line-height: 1.7;
+  max-width: 650px;
+  line-height: 1.6;
 }
 
 .controls {
+  margin-top: 35px;
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
-  margin: 30px 0;
 }
 
-input {
-  flex: 1;
-  min-width: 240px;
-  background: #0d1118;
-  border: 1px solid #293140;
+.search {
+  background: #10141c;
+  border: 1px solid #303642;
   color: white;
-  padding: 16px 18px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 15px 18px;
+  border-radius: 10px;
+  width: min(430px, 100%);
   outline: none;
 }
 
-input:focus {
-  border-color: #8257ff;
-}
-
 .categories {
+  padding: 10px 7%;
   display: flex;
-  gap: 9px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin: 20px 0 35px;
 }
 
-.category {
-  background: #0d1118;
-  color: #aab3c2;
-  border: 1px solid #252d39;
-  padding: 9px 14px;
+.cat {
+  background: #10141c;
+  border: 1px solid #2d3340;
+  color: #bfc5d1;
+  padding: 10px 16px;
   border-radius: 20px;
   cursor: pointer;
 }
 
-.category.active,
-.category:hover {
-  background: #8257ff;
+.cat.active,
+.cat:hover {
+  background: #8057ff;
   color: white;
-  border-color: #8257ff;
+  border-color: #8057ff;
 }
 
-.games {
+.library {
+  padding: 35px 7% 80px;
+}
+
+.library h2 {
+  font-size: 40px;
+  margin-bottom: 30px;
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-  gap: 18px;
-  padding-bottom: 80px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
 }
 
 .card {
-  background: #0d1118;
-  border: 1px solid #202735;
+  background: #10131a;
+  border: 1px solid #282e39;
   border-radius: 18px;
-  padding: 20px;
+  overflow: hidden;
   transition: .2s;
 }
 
 .card:hover {
   transform: translateY(-5px);
-  border-color: #8257ff;
-  box-shadow: 0 15px 40px rgba(99,65,180,.15);
+  border-color: #8057ff;
 }
 
-.cover {
-  height: 145px;
-  border-radius: 14px;
+.game-art {
+  height: 150px;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   font-size: 65px;
-  margin-bottom: 17px;
   background:
-    radial-gradient(circle at 50% 30%, var(--game-color), #090c12 70%);
+    radial-gradient(circle at center, #4b2c96, #151326 45%, #0b0d12);
 }
 
-.card h2 {
-  margin: 5px 0;
-  font-size: 20px;
+.card-body {
+  padding: 20px;
 }
 
-.type {
-  color: #9670ff;
-  font-size: 12px;
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.category {
+  color: #8c65ff;
+  font-size: 13px;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
-.card p {
-  color: #8d96a5;
+.description {
+  color: #8f97a7;
   line-height: 1.5;
   min-height: 45px;
 }
@@ -300,1183 +264,1124 @@ input:focus {
 .play {
   width: 100%;
   border: 0;
+  background: #8057ff;
+  color: white;
   padding: 13px;
   border-radius: 10px;
-  background: #8257ff;
-  color: white;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
 }
 
 .play:hover {
-  background: #7045ee;
+  background: #9675ff;
 }
 
 .empty {
-  grid-column: 1/-1;
+  display: none;
+  padding: 50px;
   text-align: center;
-  padding: 60px;
-  color: #778091;
+  color: #89909f;
 }
 
-#gameScreen {
+#player {
   display: none;
   position: fixed;
   inset: 0;
-  background: #030407;
-  z-index: 100;
-  overflow: auto;
+  background: #05060a;
+  z-index: 1000;
 }
 
-.gameTop {
-  height: 70px;
+.player-top {
+  height: 65px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 25px;
-  border-bottom: 1px solid #202530;
+  padding: 0 20px;
+  border-bottom: 1px solid #252a34;
 }
 
-.back {
-  background: #111620;
-  border: 1px solid #303846;
-  color: white;
-  padding: 10px 17px;
-  border-radius: 9px;
-  cursor: pointer;
-}
-
-#gameArea {
-  width: min(900px,95%);
-  margin: 30px auto;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-canvas {
-  max-width: 100%;
-  border: 1px solid #293140;
-  border-radius: 12px;
-  background: #080b10;
-}
-
-.gameBox {
-  width: min(650px,95%);
-  background: #0c1017;
-  border: 1px solid #252d3a;
-  border-radius: 18px;
-  padding: 30px;
-  text-align: center;
-}
-
-.bigButton {
-  padding: 15px 25px;
-  background: #8257ff;
-  color: white;
-  border: 0;
-  border-radius: 10px;
+.player-title {
   font-weight: bold;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.score {
-  color: #a78bfa;
   font-size: 20px;
-  margin: 15px;
 }
 
-.ttt {
-  display: grid;
-  grid-template-columns: repeat(3,90px);
-  gap: 8px;
-  justify-content: center;
-}
-
-.ttt button {
-  height: 90px;
-  font-size: 35px;
-  background: #111722;
+.close {
+  margin-left: auto;
+  background: #171b24;
+  border: 1px solid #343b49;
   color: white;
-  border: 1px solid #30394a;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.memory {
-  display: grid;
-  grid-template-columns: repeat(4,75px);
-  gap: 8px;
-  justify-content: center;
-}
-
-.memory button {
-  height: 75px;
-  font-size: 28px;
-  background: #151b26;
-  border: 1px solid #30394a;
+  padding: 10px 18px;
   border-radius: 9px;
   cursor: pointer;
 }
 
-footer {
-  border-top: 1px solid #1d2430;
-  padding: 40px;
-  text-align: center;
-  color: #687182;
+#gameCanvas {
+  display: block;
+  margin: 25px auto;
+  max-width: calc(100% - 30px);
+  background: #090b12;
+  border: 1px solid #303642;
 }
 
-@media(max-width:600px) {
-  nav {
-    gap: 15px;
-    padding: 0 20px;
-  }
-
-  .navlink {
-    display: none;
-  }
-
-  .hero {
-    padding-top: 45px;
-  }
-
-  .memory {
-    grid-template-columns: repeat(4,60px);
-  }
-
-  .memory button {
-    height: 60px;
-  }
+.instructions {
+  text-align: center;
+  color: #9299a8;
 }
 </style>
 </head>
 
 <body>
 
-<nav>
+<header>
   <div class="logo">GAME<span>CLOUD</span></div>
-  <a class="navlink" href="/">Home</a>
-  <a class="navlink" href="#games">Games</a>
-  <a class="navlink" href="#about">About</a>
-</nav>
 
-<main>
+  <nav>
+    <a onclick="goHome()">Home</a>
+    <a onclick="showGames()">Games</a>
+    <a onclick="about()">About</a>
+  </nav>
+
+  <button class="signin">Sign in</button>
+</header>
 
 <section class="hero">
-  <div class="kicker">PLAY IN YOUR BROWSER</div>
+  <div class="small">PLAY IN YOUR BROWSER</div>
 
   <h1>
-    More games.<br>
-    <span class="gradient">More fun.</span>
+    Your games.<br>
+    <span class="gradient">Instantly.</span>
   </h1>
 
-  <p>
-    Choose from different types of games and start playing instantly.
+  <p class="subtitle">
+    Play different types of games directly in your browser.
     No installation required.
   </p>
 
   <div class="controls">
-    <input id="search" placeholder="Search games...">
+    <input
+      id="search"
+      class="search"
+      placeholder="Search games..."
+      oninput="filterGames()"
+    >
   </div>
-
-  <div class="categories" id="categories"></div>
 </section>
 
-<section id="games">
-  <div class="games" id="gameList"></div>
+<div class="categories">
+  <button class="cat active" onclick="setCategory('All', this)">All</button>
+  <button class="cat" onclick="setCategory('Action', this)">Action</button>
+  <button class="cat" onclick="setCategory('Arcade', this)">Arcade</button>
+  <button class="cat" onclick="setCategory('Racing', this)">Racing</button>
+  <button class="cat" onclick="setCategory('Puzzle', this)">Puzzle</button>
+  <button class="cat" onclick="setCategory('Sports', this)">Sports</button>
+  <button class="cat" onclick="setCategory('Casual', this)">Casual</button>
+  <button class="cat" onclick="setCategory('Endless', this)">Endless</button>
+</div>
+
+<section class="library" id="games">
+  <h2>Choose a game</h2>
+
+  <div id="grid" class="grid"></div>
+
+  <div id="empty" class="empty">
+    No games found.
+  </div>
 </section>
 
-</main>
+<div id="player">
 
-<footer id="about">
-  GAMECLOUD • Browser Gaming
-</footer>
+  <div class="player-top">
+    <div id="playerTitle" class="player-title">Game</div>
 
-<div id="gameScreen">
-
-  <div class="gameTop">
-    <strong id="gameTitle">Game</strong>
-    <button class="back" onclick="closeGame()">← Back to Games</button>
+    <button class="close" onclick="closeGame()">
+      ✕ Close
+    </button>
   </div>
 
-  <div id="gameArea"></div>
+  <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+  <div id="instructions" class="instructions"></div>
 
 </div>
 
 <script>
 
-const games = ${JSON.stringify(GAMES)};
+const games = ${JSON.stringify(games)};
 
-const gameList = document.getElementById("gameList");
-const search = document.getElementById("search");
-const categories = document.getElementById("categories");
+let selectedCategory = "All";
+let animation = null;
 
-let activeCategory = "All";
+function renderGames() {
 
-function createCategories() {
-  const cats = ["All", ...new Set(games.map(g => g.category))];
+  const search =
+    document.getElementById("search").value.toLowerCase();
 
-  categories.innerHTML = cats.map(c =>
-    '<button class="category ' +
-    (c === "All" ? "active" : "") +
-    '" onclick="filterCategory(\\'' + c + '\\',this)">' +
-    c +
-    '</button>'
-  ).join("");
-}
+  const grid =
+    document.getElementById("grid");
 
-function filterCategory(category, el) {
-  activeCategory = category;
+  const empty =
+    document.getElementById("empty");
 
-  document.querySelectorAll(".category")
-    .forEach(x => x.classList.remove("active"));
+  grid.innerHTML = "";
 
-  el.classList.add("active");
+  const filtered = games.filter(game => {
 
-  render();
-}
+    const categoryMatch =
+      selectedCategory === "All" ||
+      game.category === selectedCategory;
 
-function render() {
-  const q = search.value.toLowerCase();
+    const searchMatch =
+      game.title.toLowerCase().includes(search) ||
+      game.category.toLowerCase().includes(search);
 
-  const filtered = games.filter(g => {
-    const matchesSearch =
-      g.title.toLowerCase().includes(q) ||
-      g.category.toLowerCase().includes(q);
-
-    const matchesCategory =
-      activeCategory === "All" ||
-      g.category === activeCategory;
-
-    return matchesSearch && matchesCategory;
+    return categoryMatch && searchMatch;
   });
 
-  if (!filtered.length) {
-    gameList.innerHTML =
-      '<div class="empty">No games found.</div>';
+  if (filtered.length === 0) {
+    empty.style.display = "block";
     return;
   }
 
-  gameList.innerHTML = filtered.map(g => `
-    <div class="card">
-      <div class="cover"
-           style="--game-color:${g.color}">
-        ${g.emoji}
+  empty.style.display = "none";
+
+  filtered.forEach(game => {
+
+    const card = document.createElement("div");
+
+    card.className = "card";
+
+    card.innerHTML = \`
+      <div class="game-art">\${game.icon}</div>
+
+      <div class="card-body">
+
+        <div class="category">
+          \${game.category}
+        </div>
+
+        <h3>\${game.title}</h3>
+
+        <p class="description">
+          \${game.description}
+        </p>
+
+        <button class="play"
+          onclick="playGame('\${game.id}')">
+          ▶ Play
+        </button>
+
       </div>
+    \`;
 
-      <div class="type">${g.category}</div>
-
-      <h2>${g.title}</h2>
-
-      <p>${g.description}</p>
-
-      <button class="play"
-        onclick="openGame('${g.id}')">
-        ▶ Play Now
-      </button>
-    </div>
-  `).join("");
+    grid.appendChild(card);
+  });
 }
 
-search.addEventListener("input", render);
+function filterGames() {
+  renderGames();
+}
 
-createCategories();
-render();
+function setCategory(category, button) {
 
-function openGame(id) {
+  selectedCategory = category;
+
+  document.querySelectorAll(".cat")
+    .forEach(b => b.classList.remove("active"));
+
+  button.classList.add("active");
+
+  renderGames();
+}
+
+function showGames() {
+  document.getElementById("games")
+    .scrollIntoView({ behavior: "smooth" });
+}
+
+function goHome() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function about() {
+  alert(
+    "GameCloud is a browser gaming platform."
+  );
+}
+
+function playGame(id) {
+
+  document.getElementById("player").style.display = "block";
+
   const game = games.find(g => g.id === id);
 
-  if (!game) return;
+  document.getElementById("playerTitle").textContent =
+    game.title;
 
-  document.getElementById("gameTitle").textContent =
-    game.emoji + " " + game.title;
+  if (animation) {
+    cancelAnimationFrame(animation);
+    animation = null;
+  }
 
-  document.getElementById("gameScreen").style.display = "block";
-
-  const area = document.getElementById("gameArea");
-
-  if (id === "snake") snake(area);
-  else if (id === "racing") racing(area);
-  else if (id === "space") space(area);
-  else if (id === "breakout") breakout(area);
-  else if (id === "pong") pong(area);
-  else if (id === "runner") runner(area);
-  else if (id === "2048") game2048(area);
-  else if (id === "tictactoe") ticTacToe(area);
-  else if (id === "memory") memory(area);
-  else if (id === "mines") mines(area);
-  else if (id === "reaction") reaction(area);
-  else if (id === "clicker") clicker(area);
+  if (id === "snake") startSnake();
+  else if (id === "space") startSpace();
+  else if (id === "runner") startRunner();
+  else if (id === "breakout") startBreakout();
+  else if (id === "memory") startMemory();
+  else if (id === "clicker") startClicker();
+  else if (id === "racing") startRacing();
+  else if (id === "pong") startPong();
 }
 
 function closeGame() {
-  document.getElementById("gameScreen").style.display = "none";
-  document.getElementById("gameArea").innerHTML = "";
+
+  document.getElementById("player").style.display = "none";
+
+  if (animation) {
+    cancelAnimationFrame(animation);
+    animation = null;
+  }
 }
 
-/* SNAKE */
 
-function snake(area) {
-  area.innerHTML = '<canvas width="500" height="500"></canvas>';
+/* =========================
+   SNAKE
+========================= */
 
-  const c = area.querySelector("canvas");
+function startSnake() {
+
+  const c = gameCanvas;
   const ctx = c.getContext("2d");
 
-  let snake = [{x:10,y:10}];
-  let food = {x:15,y:15};
+  let snake = [
+    {x: 10, y: 10}
+  ];
+
+  let food = {
+    x: 15,
+    y: 15
+  };
+
   let dx = 1;
   let dy = 0;
-  let score = 0;
+
+  const size = 25;
+
+  document.getElementById("instructions").textContent =
+    "Use Arrow Keys to move.";
 
   document.onkeydown = e => {
-    if(e.key==="ArrowUp" && dy===0){dx=0;dy=-1}
-    if(e.key==="ArrowDown" && dy===0){dx=0;dy=1}
-    if(e.key==="ArrowLeft" && dx===0){dx=-1;dy=0}
-    if(e.key==="ArrowRight" && dx===0){dx=1;dy=0}
-  };
 
-  const timer = setInterval(() => {
-    const head = {
-      x: snake[0].x + dx,
-      y: snake[0].y + dy
-    };
-
-    if(
-      head.x<0 || head.x>=25 ||
-      head.y<0 || head.y>=25 ||
-      snake.some(s=>s.x===head.x&&s.y===head.y)
-    ){
-      clearInterval(timer);
-      alert("Game Over! Score: "+score);
-      return;
+    if (e.key === "ArrowUp" && dy !== 1) {
+      dx = 0;
+      dy = -1;
     }
 
-    snake.unshift(head);
+    if (e.key === "ArrowDown" && dy !== -1) {
+      dx = 0;
+      dy = 1;
+    }
 
-    if(head.x===food.x && head.y===food.y){
-      score++;
-      food={
-        x:Math.floor(Math.random()*25),
-        y:Math.floor(Math.random()*25)
+    if (e.key === "ArrowLeft" && dx !== 1) {
+      dx = -1;
+      dy = 0;
+    }
+
+    if (e.key === "ArrowRight" && dx !== -1) {
+      dx = 1;
+      dy = 0;
+    }
+  };
+
+  function loop() {
+
+    animation = requestAnimationFrame(loop);
+
+    if (Math.random() > .92) {
+
+      const head = {
+        x: snake[0].x + dx,
+        y: snake[0].y + dy
       };
-    } else {
-      snake.pop();
+
+      if (
+        head.x < 0 ||
+        head.y < 0 ||
+        head.x >= c.width / size ||
+        head.y >= c.height / size
+      ) {
+        snake = [{x: 10, y: 10}];
+        dx = 1;
+        dy = 0;
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (
+        head.x === food.x &&
+        head.y === food.y
+      ) {
+        food = {
+          x: Math.floor(Math.random() * 35),
+          y: Math.floor(Math.random() * 21)
+        };
+      } else {
+        snake.pop();
+      }
     }
 
-    ctx.fillStyle="#070a10";
-    ctx.fillRect(0,0,500,500);
+    ctx.fillStyle = "#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
 
-    ctx.fillStyle="#ef4444";
-    ctx.fillRect(food.x*20,food.y*20,19,19);
+    ctx.fillStyle = "#8b63ff";
 
-    ctx.fillStyle="#22c55e";
-    snake.forEach(s=>ctx.fillRect(s.x*20,s.y*20,19,19));
-
-    ctx.fillStyle="white";
-    ctx.font="18px Arial";
-    ctx.fillText("Score: "+score,10,25);
-  },100);
-}
-
-/* RACING */
-
-function racing(area) {
-  area.innerHTML = `
-    <div class="gameBox">
-      <h1>🏎️ Neon Racing</h1>
-      <div class="score">Score: <span id="raceScore">0</span></div>
-      <p>Use ← → to move your car.</p>
-      <canvas width="400" height="550"></canvas>
-    </div>
-  `;
-
-  const c=area.querySelector("canvas");
-  const ctx=c.getContext("2d");
-
-  let car=180;
-  let score=0;
-  let enemy={x:Math.random()*330,y:-100};
-  let keys={};
-
-  document.onkeydown=e=>keys[e.key]=true;
-  document.onkeyup=e=>keys[e.key]=false;
-
-  const timer=setInterval(()=>{
-
-    if(keys["ArrowLeft"]) car-=7;
-    if(keys["ArrowRight"]) car+=7;
-
-    car=Math.max(20,Math.min(330,car));
-
-    enemy.y+=6;
-
-    if(enemy.y>550){
-      enemy.y=-100;
-      enemy.x=Math.random()*330;
-      score++;
-      document.getElementById("raceScore").textContent=score;
-    }
-
-    ctx.fillStyle="#111";
-    ctx.fillRect(0,0,400,550);
-
-    ctx.fillStyle="#333";
-    ctx.fillRect(50,0,300,550);
-
-    ctx.strokeStyle="#fff";
-    ctx.setLineDash([25,25]);
-
-    ctx.beginPath();
-    ctx.moveTo(200,0);
-    ctx.lineTo(200,550);
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-
-    ctx.fillStyle="#22c55e";
-    ctx.fillRect(car,450,50,80);
-
-    ctx.fillStyle="#ef4444";
-    ctx.fillRect(enemy.x,enemy.y,50,80);
-
-    if(
-      enemy.y+80>450 &&
-      enemy.y<530 &&
-      enemy.x<car+50 &&
-      enemy.x+50>car
-    ){
-      clearInterval(timer);
-      alert("Race Over! Score: "+score);
-    }
-
-  },30);
-}
-
-/* SPACE */
-
-function space(area) {
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🚀 Space Shooter</h1>
-      <div class="score">Score: <span id="spaceScore">0</span></div>
-      <p>Move with ← → and shoot with SPACE.</p>
-      <canvas width="600" height="500"></canvas>
-    </div>
-  `;
-
-  const c=area.querySelector("canvas");
-  const ctx=c.getContext("2d");
-
-  let player=280;
-  let bullets=[];
-  let enemies=[];
-  let score=0;
-  let keys={};
-
-  document.onkeydown=e=>{
-    keys[e.key]=true;
-
-    if(e.code==="Space"){
-      bullets.push({
-        x:player+15,
-        y:450
-      });
-    }
-  };
-
-  document.onkeyup=e=>keys[e.key]=false;
-
-  const timer=setInterval(()=>{
-
-    if(keys["ArrowLeft"]) player-=6;
-    if(keys["ArrowRight"]) player+=6;
-
-    player=Math.max(0,Math.min(570,player));
-
-    if(Math.random()<.025){
-      enemies.push({
-        x:Math.random()*570,
-        y:-30
-      });
-    }
-
-    bullets.forEach(b=>b.y-=9);
-    enemies.forEach(e=>e.y+=3);
-
-    bullets.forEach(b=>{
-      enemies.forEach(e=>{
-        if(
-          b.x<e.x+30 &&
-          b.x+5>e.x &&
-          b.y<e.y+30 &&
-          b.y+10>e.y
-        ){
-          e.dead=true;
-          b.dead=true;
-          score++;
-          document.getElementById("spaceScore").textContent=score;
-        }
-      });
-    });
-
-    enemies=enemies.filter(e=>!e.dead&&e.y<520);
-    bullets=bullets.filter(b=>!b.dead&&b.y>0);
-
-    ctx.fillStyle="#050712";
-    ctx.fillRect(0,0,600,500);
-
-    ctx.fillStyle="#fff";
-
-    for(let i=0;i<50;i++){
+    snake.forEach(p => {
       ctx.fillRect(
-        Math.random()*600,
-        Math.random()*500,
-        1,
-        1
+        p.x * size,
+        p.y * size,
+        size - 2,
+        size - 2
       );
-    }
-
-    ctx.fillStyle="#8b5cf6";
-    ctx.fillRect(player,450,30,30);
-
-    ctx.fillStyle="#22d3ee";
-    bullets.forEach(b=>ctx.fillRect(b.x,b.y,5,12));
-
-    ctx.fillStyle="#ef4444";
-    enemies.forEach(e=>ctx.fillRect(e.x,e.y,30,30));
-
-  },30);
-}
-
-/* BREAKOUT */
-
-function breakout(area) {
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🧱 Brick Breaker</h1>
-      <p>Move your paddle with ← →.</p>
-      <canvas width="600" height="450"></canvas>
-    </div>
-  `;
-
-  const c=area.querySelector("canvas");
-  const ctx=c.getContext("2d");
-
-  let x=285;
-  let ball={x:300,y:350,dx:4,dy:-4};
-  let paddle=250;
-  let bricks=[];
-
-  for(let r=0;r<5;r++){
-    for(let col=0;col<9;col++){
-      bricks.push({
-        x:10+col*65,
-        y:30+r*25,
-        alive:true
-      });
-    }
-  }
-
-  document.onkeydown=e=>{
-    if(e.key==="ArrowLeft")paddle-=20;
-    if(e.key==="ArrowRight")paddle+=20;
-  };
-
-  setInterval(()=>{
-
-    paddle=Math.max(0,Math.min(500,paddle));
-
-    ball.x+=ball.dx;
-    ball.y+=ball.dy;
-
-    if(ball.x<0||ball.x>590)ball.dx*=-1;
-    if(ball.y<0)ball.dy*=-1;
-
-    if(
-      ball.y>410 &&
-      ball.x>paddle &&
-      ball.x<paddle+100
-    ) ball.dy=-Math.abs(ball.dy);
-
-    bricks.forEach(b=>{
-      if(
-        b.alive &&
-        ball.x>b.x &&
-        ball.x<b.x+55 &&
-        ball.y>b.y &&
-        ball.y<b.y+18
-      ){
-        b.alive=false;
-        ball.dy*=-1;
-      }
     });
 
-    if(ball.y>450){
-      alert("Game Over");
-      ball={x:300,y:350,dx:4,dy:-4};
-    }
+    ctx.fillStyle = "#ff4d75";
 
-    ctx.fillStyle="#05070b";
-    ctx.fillRect(0,0,600,450);
+    ctx.fillRect(
+      food.x * size,
+      food.y * size,
+      size - 2,
+      size - 2
+    );
+  }
 
-    ctx.fillStyle="#8b5cf6";
-    bricks.filter(b=>b.alive)
-      .forEach(b=>ctx.fillRect(b.x,b.y,55,18));
-
-    ctx.fillStyle="#fff";
-    ctx.beginPath();
-    ctx.arc(ball.x,ball.y,8,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillRect(paddle,420,100,15);
-
-  },30);
+  loop();
 }
 
-/* PONG */
 
-function pong(area) {
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🏓 Pong</h1>
-      <p>Move with W and S.</p>
-      <canvas width="650" height="400"></canvas>
-    </div>
-  `;
+/* =========================
+   SPACE SHOOTER
+========================= */
 
-  const c=area.querySelector("canvas");
-  const ctx=c.getContext("2d");
+function startSpace() {
 
-  let py=160;
-  let cy=160;
-  let ball={x:325,y:200,dx:5,dy:3};
+  const c = gameCanvas;
+  const ctx = c.getContext("2d");
 
-  document.onkeydown=e=>{
-    if(e.key.toLowerCase()==="w")py-=20;
-    if(e.key.toLowerCase()==="s")py+=20;
+  let player = {
+    x: 450,
+    y: 480
   };
 
-  setInterval(()=>{
+  let bullets = [];
+  let enemies = [];
+  let keys = {};
 
-    ball.x+=ball.dx;
-    ball.y+=ball.dy;
+  document.getElementById("instructions").textContent =
+    "Arrow Keys / A-D to move • Space to shoot.";
 
-    if(ball.y<0||ball.y>390)ball.dy*=-1;
+  document.onkeydown = e => {
+    keys[e.key] = true;
 
-    cy+=ball.y>cy?3:-3;
+    if (e.code === "Space") {
 
-    if(
-      ball.x<40 &&
-      ball.y>py &&
-      ball.y<py+80
-    ) ball.dx=Math.abs(ball.dx);
-
-    if(
-      ball.x>610 &&
-      ball.y>cy &&
-      ball.y<cy+80
-    ) ball.dx=-Math.abs(ball.dx);
-
-    if(ball.x<0||ball.x>650){
-      ball={x:325,y:200,dx:5,dy:3};
-    }
-
-    ctx.fillStyle="#05070b";
-    ctx.fillRect(0,0,650,400);
-
-    ctx.fillStyle="#fff";
-    ctx.fillRect(20,py,15,80);
-    ctx.fillRect(615,cy,15,80);
-
-    ctx.beginPath();
-    ctx.arc(ball.x,ball.y,9,0,Math.PI*2);
-    ctx.fill();
-
-  },30);
-}
-
-/* RUNNER */
-
-function runner(area) {
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🏃 Cyber Runner</h1>
-      <p>Press SPACE to jump.</p>
-      <div class="score">Score: <span id="runnerScore">0</span></div>
-      <canvas width="700" height="350"></canvas>
-    </div>
-  `;
-
-  const c=area.querySelector("canvas");
-  const ctx=c.getContext("2d");
-
-  let playerY=270;
-  let velocity=0;
-  let obstacle=700;
-  let score=0;
-
-  document.onkeydown=e=>{
-    if(e.code==="Space" && playerY>=270){
-      velocity=-13;
+      bullets.push({
+        x: player.x,
+        y: player.y
+      });
     }
   };
 
-  setInterval(()=>{
+  document.onkeyup = e => {
+    keys[e.key] = false;
+  };
 
-    velocity+=.7;
-    playerY+=velocity;
+  function loop() {
 
-    if(playerY>270){
-      playerY=270;
-      velocity=0;
+    animation = requestAnimationFrame(loop);
+
+    ctx.fillStyle = "#050711";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    if (
+      keys["ArrowLeft"] ||
+      keys["a"]
+    ) player.x -= 6;
+
+    if (
+      keys["ArrowRight"] ||
+      keys["d"]
+    ) player.x += 6;
+
+    player.x =
+      Math.max(20, Math.min(880, player.x));
+
+    if (Math.random() < .03) {
+
+      enemies.push({
+        x: Math.random() * 860 + 20,
+        y: -20
+      });
     }
 
-    obstacle-=7;
+    bullets.forEach(b => {
+      b.y -= 9;
+    });
 
-    if(obstacle<-40){
-      obstacle=700;
-      score++;
-      document.getElementById("runnerScore").textContent=score;
-    }
+    enemies.forEach(e => {
+      e.y += 3;
+    });
 
-    ctx.fillStyle="#060811";
-    ctx.fillRect(0,0,700,350);
+    bullets = bullets.filter(b => b.y > 0);
+    enemies = enemies.filter(e => e.y < 580);
 
-    ctx.fillStyle="#8b5cf6";
-    ctx.fillRect(0,310,700,40);
+    bullets.forEach(b => {
 
-    ctx.fillStyle="#22d3ee";
-    ctx.fillRect(100,playerY,40,40);
+      enemies.forEach(e => {
 
-    ctx.fillStyle="#ef4444";
-    ctx.fillRect(obstacle,270,35,40);
-
-    if(
-      obstacle<140 &&
-      obstacle+35>100 &&
-      playerY+40>270
-    ){
-      alert("Game Over! Score: "+score);
-      obstacle=700;
-      score=0;
-    }
-
-  },30);
-}
-
-/* 2048 */
-
-function game2048(area) {
-  let board=Array(16).fill(0);
-
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🔢 2048</h1>
-      <p>Use arrow keys.</p>
-      <div id="board2048"
-        style="
-        display:grid;
-        grid-template-columns:repeat(4,80px);
-        gap:8px;
-        justify-content:center;
-        margin:20px">
-      </div>
-      <button class="bigButton"
-        onclick="game2048(document.getElementById('gameArea'))">
-        Restart
-      </button>
-    </div>
-  `;
-
-  function add() {
-    const empty=board
-      .map((x,i)=>x===0?i:-1)
-      .filter(x=>x>=0);
-
-    if(empty.length){
-      board[empty[Math.floor(Math.random()*empty.length)]]=2;
-    }
-  }
-
-  add();
-  add();
-
-  function draw(){
-
-    document.getElementById("board2048").innerHTML=
-      board.map(x=>
-        '<div style="height:80px;background:#171d28;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:bold">'+
-        (x||"")+
-        '</div>'
-      ).join("");
-  }
-
-  function move(dir){
-
-    let old=board.join();
-
-    function line(a){
-      a=a.filter(x=>x);
-
-      for(let i=0;i<a.length-1;i++){
-        if(a[i]===a[i+1]){
-          a[i]*=2;
-          a.splice(i+1,1);
+        if (
+          Math.abs(b.x - e.x) < 25 &&
+          Math.abs(b.y - e.y) < 25
+        ) {
+          e.y = 700;
+          b.y = -100;
         }
-      }
 
-      while(a.length<4)a.push(0);
+      });
 
-      return a;
-    }
+    });
 
-    if(dir==="left"||dir==="right"){
-      for(let r=0;r<4;r++){
-        let a=board.slice(r*4,r*4+4);
+    ctx.fillStyle = "#8b63ff";
 
-        if(dir==="right")a.reverse();
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y - 20);
+    ctx.lineTo(player.x - 18, player.y + 20);
+    ctx.lineTo(player.x + 18, player.y + 20);
+    ctx.closePath();
+    ctx.fill();
 
-        a=line(a);
+    ctx.fillStyle = "#52e5ff";
 
-        if(dir==="right")a.reverse();
+    bullets.forEach(b => {
+      ctx.fillRect(b.x - 2,b.y,4,15);
+    });
 
-        for(let c=0;c<4;c++)
-          board[r*4+c]=a[c];
-      }
-    } else {
+    ctx.fillStyle = "#ff426d";
 
-      for(let c=0;c<4;c++){
-
-        let a=[
-          board[c],
-          board[c+4],
-          board[c+8],
-          board[c+12]
-        ];
-
-        if(dir==="down")a.reverse();
-
-        a=line(a);
-
-        if(dir==="down")a.reverse();
-
-        a.forEach((v,i)=>{
-          board[c+i*4]=v;
-        });
-      }
-    }
-
-    if(old!==board.join())add();
-
-    draw();
+    enemies.forEach(e => {
+      ctx.beginPath();
+      ctx.arc(e.x,e.y,18,0,Math.PI*2);
+      ctx.fill();
+    });
   }
 
-  document.onkeydown=e=>{
-    if(e.key==="ArrowLeft")move("left");
-    if(e.key==="ArrowRight")move("right");
-    if(e.key==="ArrowUp")move("up");
-    if(e.key==="ArrowDown")move("down");
-  };
-
-  draw();
+  loop();
 }
 
-/* TIC TAC TOE */
 
-function ticTacToe(area) {
+/* =========================
+   NEON RUNNER
+========================= */
 
-  let board=Array(9).fill("");
+function startRunner() {
 
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>❌ Tic-Tac-Toe</h1>
-      <div class="ttt" id="ttt"></div>
-      <p id="tttStatus">Your turn</p>
-      <button class="bigButton" onclick="ticTacToe(document.getElementById('gameArea'))">
-        Restart
-      </button>
-    </div>
-  `;
+  const c = gameCanvas;
+  const ctx = c.getContext("2d");
 
-  function check(){
-
-    const wins=[
-      [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[2,5,8],
-      [0,4,8],[2,4,6]
-    ];
-
-    for(const w of wins){
-      if(
-        board[w[0]] &&
-        board[w[0]]===board[w[1]] &&
-        board[w[1]]===board[w[2]]
-      ) return board[w[0]];
-    }
-
-    return board.every(Boolean)?"draw":null;
-  }
-
-  function draw(){
-
-    document.getElementById("ttt").innerHTML=
-      board.map((x,i)=>
-        '<button onclick="window.tttMove('+i+')">'+x+'</button>'
-      ).join("");
-
-  }
-
-  window.tttMove=i=>{
-
-    if(board[i])return;
-
-    board[i]="X";
-
-    let result=check();
-
-    if(result){
-      document.getElementById("tttStatus").textContent=
-        result==="draw"?"Draw!":result+" wins!";
-      draw();
-      return;
-    }
-
-    let empty=board
-      .map((x,i)=>x?null:i)
-      .filter(x=>x!==null);
-
-    if(empty.length){
-      board[empty[Math.floor(Math.random()*empty.length)]]="O";
-    }
-
-    result=check();
-
-    if(result){
-      document.getElementById("tttStatus").textContent=
-        result==="draw"?"Draw!":result+" wins!";
-    }
-
-    draw();
+  let player = {
+    x: 130,
+    y: 440,
+    vy: 0,
+    jumping: false
   };
 
-  draw();
-}
+  let obstacles = [];
+  let score = 0;
 
-/* MEMORY */
+  document.getElementById("instructions").textContent =
+    "Press SPACE or Arrow Up to jump.";
 
-function memory(area){
+  document.onkeydown = e => {
 
-  const icons=["🐶","🐱","🦊","🐼","🐸","🐵","🦁","🐯"];
-  let cards=[...icons,...icons]
-    .sort(()=>Math.random()-.5);
+    if (
+      (e.code === "Space" ||
+       e.key === "ArrowUp") &&
+      !player.jumping
+    ) {
+      player.vy = -14;
+      player.jumping = true;
+    }
+  };
 
-  let opened=[];
-  let matched=[];
+  function loop() {
 
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🃏 Memory Match</h1>
-      <div class="memory" id="memory"></div>
-    </div>
-  `;
+    animation = requestAnimationFrame(loop);
 
-  window.memoryClick=i=>{
+    ctx.fillStyle = "#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
 
-    if(
-      opened.length>=2 ||
-      opened.includes(i) ||
-      matched.includes(i)
-    )return;
+    player.vy += .7;
+    player.y += player.vy;
 
-    opened.push(i);
-    draw();
+    if (player.y >= 440) {
+      player.y = 440;
+      player.vy = 0;
+      player.jumping = false;
+    }
 
-    if(opened.length===2){
+    if (Math.random() < .025) {
 
-      if(cards[opened[0]]===cards[opened[1]]){
+      obstacles.push({
+        x: 900,
+        y: 440,
+        w: 30,
+        h: 50
+      });
+    }
 
-        matched.push(...opened);
-        opened=[];
-        draw();
+    obstacles.forEach(o => {
+      o.x -= 7;
+    });
 
-      }else{
+    obstacles = obstacles.filter(o => o.x > -50);
 
-        setTimeout(()=>{
-          opened=[];
-          draw();
-        },700);
+    obstacles.forEach(o => {
 
+      if (
+        player.x + 20 > o.x &&
+        player.x - 20 < o.x + o.w &&
+        player.y + 20 > o.y - o.h
+      ) {
+        score = 0;
       }
-    }
-  };
 
-  function draw(){
-
-    document.getElementById("memory").innerHTML=
-      cards.map((c,i)=>{
-
-        const show=
-          opened.includes(i)||matched.includes(i);
-
-        return '<button onclick="memoryClick('+i+')">'+
-          (show?c:"?")+
-          '</button>';
-
-      }).join("");
-  }
-
-  draw();
-}
-
-/* MINES */
-
-function mines(area){
-
-  let cells=Array(25).fill(0);
-
-  let mines=new Set();
-
-  while(mines.size<5)
-    mines.add(Math.floor(Math.random()*25));
-
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>💣 Mines</h1>
-      <p>Find safe squares.</p>
-      <div id="mineBoard"
-        style="
-        display:grid;
-        grid-template-columns:repeat(5,55px);
-        gap:6px;
-        justify-content:center">
-      </div>
-    </div>
-  `;
-
-  window.mineClick=i=>{
-
-    const buttons=
-      document.querySelectorAll("#mineBoard button");
-
-    if(mines.has(i)){
-      buttons[i].textContent="💣";
-      alert("Boom! Try again.");
-      return;
-    }
-
-    buttons[i].textContent="✓";
-    buttons[i].style.color="#22c55e";
-  };
-
-  document.getElementById("mineBoard").innerHTML=
-    cells.map((_,i)=>
-      '<button onclick="mineClick('+i+')" '+
-      'style="height:55px;background:#151b25;color:white;border:1px solid #30394a;border-radius:8px;font-size:20px">?</button>'
-    ).join("");
-}
-
-/* REACTION */
-
-function reaction(area){
-
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🎯 Reaction Test</h1>
-      <p id="reactionText">Press START and wait for green.</p>
-      <button class="bigButton" id="reactionButton">
-        START
-      </button>
-    </div>
-  `;
-
-  const btn=document.getElementById("reactionButton");
-  const text=document.getElementById("reactionText");
-
-  let start=0;
-  let waiting=false;
-
-  btn.onclick=()=>{
-
-    if(!waiting){
-
-      waiting=true;
-      btn.textContent="WAIT...";
-
-      setTimeout(()=>{
-
-        start=Date.now();
-        btn.textContent="CLICK!";
-        btn.style.background="#22c55e";
-
-      },1000+Math.random()*3000);
-
-    }else{
-
-      if(start){
-
-        const ms=Date.now()-start;
-
-        text.textContent=
-          "Your reaction time: "+ms+" ms";
-
-        btn.textContent="TRY AGAIN";
-        btn.style.background="";
-
-        waiting=false;
-        start=0;
-
-      }else{
-
-        text.textContent="Too early!";
-
-        btn.textContent="TRY AGAIN";
-        waiting=false;
-      }
-    }
-  };
-}
-
-/* CLICKER */
-
-function clicker(area){
-
-  let score=0;
-
-  area.innerHTML=`
-    <div class="gameBox">
-      <h1>🌟 Space Clicker</h1>
-      <div class="score">
-        Stars: <span id="clickScore">0</span>
-      </div>
-      <button
-        id="star"
-        style="
-        width:180px;
-        height:180px;
-        border-radius:50%;
-        border:0;
-        background:#8257ff;
-        color:white;
-        font-size:70px;
-        cursor:pointer">
-        ⭐
-      </button>
-    </div>
-  `;
-
-  document.getElementById("star").onclick=()=>{
+    });
 
     score++;
 
-    document.getElementById("clickScore")
-      .textContent=score;
-  };
+    ctx.fillStyle = "#8b63ff";
+    ctx.fillRect(
+      player.x - 20,
+      player.y - 40,
+      40,
+      40
+    );
+
+    ctx.fillStyle = "#ff426d";
+
+    obstacles.forEach(o => {
+      ctx.fillRect(o.x,o.y-o.h,o.w,o.h);
+    });
+
+    ctx.fillStyle = "white";
+    ctx.font = "22px Arial";
+    ctx.fillText("Score: " + score,20,35);
+  }
+
+  loop();
 }
+
+
+/* =========================
+   BREAKOUT
+========================= */
+
+function startBreakout() {
+
+  const c = gameCanvas;
+  const ctx = c.getContext("2d");
+
+  let x = 450;
+  let y = 450;
+
+  let dx = 5;
+  let dy = -5;
+
+  let paddle = 400;
+
+  let bricks = [];
+
+  for(let r=0;r<5;r++) {
+    for(let col=0;col<10;col++) {
+
+      bricks.push({
+        x: col*85+25,
+        y: r*30+50,
+        alive: true
+      });
+
+    }
+  }
+
+  document.getElementById("instructions").textContent =
+    "Move with Arrow Keys.";
+
+  document.onkeydown = e => {
+
+    if(e.key === "ArrowLeft")
+      paddle -= 30;
+
+    if(e.key === "ArrowRight")
+      paddle += 30;
+
+    paddle =
+      Math.max(0,Math.min(780,paddle));
+  };
+
+  function loop() {
+
+    animation = requestAnimationFrame(loop);
+
+    ctx.fillStyle="#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    x += dx;
+    y += dy;
+
+    if(x < 10 || x > 890)
+      dx *= -1;
+
+    if(y < 10)
+      dy *= -1;
+
+    if(
+      y > 445 &&
+      x > paddle &&
+      x < paddle + 120
+    )
+      dy = -Math.abs(dy);
+
+    if(y > 550) {
+      x=450;
+      y=450;
+    }
+
+    bricks.forEach(b => {
+
+      if(
+        b.alive &&
+        x > b.x &&
+        x < b.x+75 &&
+        y > b.y &&
+        y < b.y+20
+      ) {
+        b.alive=false;
+        dy*=-1;
+      }
+
+    });
+
+    ctx.fillStyle="#8b63ff";
+
+    bricks.forEach(b => {
+
+      if(b.alive)
+        ctx.fillRect(
+          b.x,
+          b.y,
+          75,
+          20
+        );
+
+    });
+
+    ctx.fillStyle="white";
+
+    ctx.beginPath();
+    ctx.arc(x,y,8,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="#52e5ff";
+    ctx.fillRect(paddle,470,120,15);
+  }
+
+  loop();
+}
+
+
+/* =========================
+   MEMORY
+========================= */
+
+function startMemory() {
+
+  cancelAnimationFrame(animation);
+
+  const c = gameCanvas;
+  const ctx = c.getContext("2d");
+
+  const symbols = [
+    "🍎","🍎",
+    "🍕","🍕",
+    "🚀","🚀",
+    "⚽","⚽",
+    "🎮","🎮",
+    "🐱","🐱",
+    "⭐","⭐",
+    "🔥","🔥"
+  ];
+
+  symbols.sort(() => Math.random()-.5);
+
+  let revealed=[];
+  let matched=[];
+
+  document.getElementById("instructions").textContent =
+    "Click two cards to find matching pairs.";
+
+  function draw() {
+
+    ctx.fillStyle="#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    symbols.forEach((s,i)=>{
+
+      const col=i%4;
+      const row=Math.floor(i/4);
+
+      const x=220+col*120;
+      const y=80+row*110;
+
+      ctx.fillStyle =
+        matched.includes(i) ||
+        revealed.includes(i)
+        ? "#8057ff"
+        : "#171b25";
+
+      ctx.fillRect(x,y,90,80);
+
+      if(
+        matched.includes(i) ||
+        revealed.includes(i)
+      ) {
+        ctx.font="40px Arial";
+        ctx.fillStyle="white";
+        ctx.fillText(s,x+25,y+53);
+      }
+
+    });
+  }
+
+  c.onclick = e => {
+
+    const rect=c.getBoundingClientRect();
+
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+
+    symbols.forEach((s,i)=>{
+
+      const col=i%4;
+      const row=Math.floor(i/4);
+
+      const x=220+col*120;
+      const y=80+row*110;
+
+      if(
+        mx>x &&
+        mx<x+90 &&
+        my>y &&
+        my<y+80 &&
+        !matched.includes(i) &&
+        !revealed.includes(i)
+      ) {
+
+        revealed.push(i);
+
+        if(revealed.length===2) {
+
+          if(symbols[revealed[0]] === symbols[revealed[1]]) {
+
+            matched.push(
+              revealed[0],
+              revealed[1]
+            );
+
+          }
+
+          setTimeout(()=>{
+            revealed=[];
+            draw();
+          },500);
+
+        }
+
+      }
+
+    });
+
+    draw();
+  };
+
+  draw();
+}
+
+
+/* =========================
+   CLICKER
+========================= */
+
+function startClicker() {
+
+  cancelAnimationFrame(animation);
+
+  const c = gameCanvas;
+  const ctx = c.getContext("2d");
+
+  let score=0;
+
+  document.getElementById("instructions").textContent =
+    "Click the monster as many times as possible!";
+
+  c.onclick=()=>{
+
+    score++;
+
+    draw();
+
+  };
+
+  function draw(){
+
+    ctx.fillStyle="#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    ctx.font="90px Arial";
+    ctx.fillText("👾",380,310);
+
+    ctx.font="30px Arial";
+    ctx.fillStyle="white";
+    ctx.fillText(
+      "Score: "+score,
+      370,
+      380
+    );
+
+  }
+
+  draw();
+}
+
+
+/* =========================
+   RACING
+========================= */
+
+function startRacing() {
+
+  const c=gameCanvas;
+  const ctx=c.getContext("2d");
+
+  let car=450;
+  let enemies=[];
+  let keys={};
+  let score=0;
+
+  document.getElementById("instructions").textContent =
+    "Use Left / Right Arrow Keys.";
+
+  document.onkeydown=e=>{
+    keys[e.key]=true;
+  };
+
+  document.onkeyup=e=>{
+    keys[e.key]=false;
+  };
+
+  function loop(){
+
+    animation=requestAnimationFrame(loop);
+
+    if(keys["ArrowLeft"])
+      car-=7;
+
+    if(keys["ArrowRight"])
+      car+=7;
+
+    car=Math.max(300,Math.min(600,car));
+
+    if(Math.random()<.025){
+
+      enemies.push({
+        x:300+Math.random()*300,
+        y:-80
+      });
+
+    }
+
+    enemies.forEach(e=>{
+      e.y+=7;
+    });
+
+    enemies=enemies.filter(e=>e.y<600);
+
+    enemies.forEach(e=>{
+
+      if(
+        Math.abs(car-e.x)<40 &&
+        Math.abs(480-e.y)<70
+      ){
+        score=0;
+      }
+
+    });
+
+    score++;
+
+    ctx.fillStyle="#15171c";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    ctx.fillStyle="#30343d";
+
+    ctx.fillRect(280,0,340,c.height);
+
+    ctx.fillStyle="#8b63ff";
+
+    ctx.fillRect(
+      car-20,
+      470,
+      40,
+      70
+    );
+
+    ctx.fillStyle="#ff426d";
+
+    enemies.forEach(e=>{
+      ctx.fillRect(
+        e.x-20,
+        e.y,
+        40,
+        70
+      );
+    });
+
+    ctx.fillStyle="white";
+    ctx.font="22px Arial";
+    ctx.fillText(
+      "Distance: "+score,
+      20,
+      35
+    );
+
+  }
+
+  loop();
+}
+
+
+/* =========================
+   PONG
+========================= */
+
+function startPong(){
+
+  const c=gameCanvas;
+  const ctx=c.getContext("2d");
+
+  let py=230;
+  let ey=230;
+
+  let ball={
+    x:450,
+    y:275,
+    dx:5,
+    dy:4
+  };
+
+  document.getElementById("instructions").textContent =
+    "Use Arrow Up / Down.";
+
+  document.onkeydown=e=>{
+
+    if(e.key==="ArrowUp")
+      py-=25;
+
+    if(e.key==="ArrowDown")
+      py+=25;
+
+  };
+
+  function loop(){
+
+    animation=requestAnimationFrame(loop);
+
+    ctx.fillStyle="#080a10";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    ball.x+=ball.dx;
+    ball.y+=ball.dy;
+
+    if(ball.y<0 || ball.y>550)
+      ball.dy*=-1;
+
+    ey +=
+      (ball.y-ey)*.04;
+
+    if(
+      ball.x<50 &&
+      ball.y>py &&
+      ball.y<py+100
+    )
+      ball.dx=Math.abs(ball.dx);
+
+    if(
+      ball.x>850 &&
+      ball.y>ey &&
+      ball.y<ey+100
+    )
+      ball.dx=-Math.abs(ball.dx);
+
+    if(ball.x<0 || ball.x>900){
+
+      ball.x=450;
+      ball.y=275;
+
+    }
+
+    ctx.fillStyle="#8b63ff";
+
+    ctx.fillRect(
+      25,
+      py,
+      20,
+      100
+    );
+
+    ctx.fillStyle="#52e5ff";
+
+    ctx.fillRect(
+      855,
+      ey,
+      20,
+      100
+    );
+
+    ctx.fillStyle="white";
+
+    ctx.beginPath();
+    ctx.arc(
+      ball.x,
+      ball.y,
+      10,
+      0,
+      Math.PI*2
+    );
+    ctx.fill();
+
+  }
+
+  loop();
+}
+
+
+/* START */
+
+renderGames();
 
 </script>
 
 </body>
-</html>`;
+</html>
+`;
