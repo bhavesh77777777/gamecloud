@@ -1162,7 +1162,7 @@ if (loginButton) {
 
 
 /* =========================
-   START
+   START// GameCloud deployment test
 ========================= */
 
 render();const signalingSocket =
